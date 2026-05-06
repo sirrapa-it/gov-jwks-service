@@ -13,6 +13,7 @@ vendor/
 .idea/
 .vscode/
 *.swp
+.claude/
 
 # Environment files
 .env
