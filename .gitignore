@@ -1,0 +1,22 @@
+# Binaries
+jwks-server
+jwks-rotator
+
+# Test output
+coverage.out
+*.out
+
+# Go build cache
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Environment files
+.env
+.env.local
+
+# OS
+.DS_Store

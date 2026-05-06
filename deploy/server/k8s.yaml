@@ -1,0 +1,176 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jwks-service
+  namespace: platform
+  labels:
+    app: jwks-service
+    component: auth
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jwks-service
+  namespace: platform
+  labels:
+    app: jwks-service
+    component: auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jwks-service
+  template:
+    metadata:
+      labels:
+        app: jwks-service
+        component: auth
+    spec:
+      serviceAccountName: jwks-service
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: jwks-service
+          image: registry.github.com/sirrapa/platform/jwks-service:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: VAULT_ADDR
+              value: "https://vault.platform.internal:8200"
+            - name: VAULT_K8S_ROLE
+              value: "jwks-service"
+            - name: VAULT_MOUNT
+              value: "secret"
+            - name: VAULT_SECRET_PATH
+              value: "jwks-service"
+            - name: SYNC_INTERVAL
+              value: "5m"
+            - name: LOG_LEVEL
+              value: "warn"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jwks-service
+  namespace: platform
+  labels:
+    app: jwks-service
+spec:
+  selector:
+    app: jwks-service
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: jwks-service
+  namespace: platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: jwks-service
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: jwks-service
+  namespace: platform
+  labels:
+    app: jwks-service
+spec:
+  selector:
+    matchLabels:
+      app: jwks-service
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+# NIS2/BIO alert rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: jwks-service-alerts
+  namespace: platform
+spec:
+  groups:
+    - name: jwks
+      rules:
+        - alert: JWKSNoActiveKeys
+          expr: jwks_active_keys == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "No active JWKS signing keys available"
+            description: "The jwks-service has no active signing keys. JWT validation will fail."
+
+        - alert: JWKSKeyRotationOverdue
+          # Alert after 35 days (monthly rotation + 5 day buffer)
+          expr: time() - jwks_last_rotation_timestamp_seconds > 3024000
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "JWKS key rotation is overdue (NIS2/BIO)"
+            description: "Key has not been rotated in {{ humanizeDuration $value }}. Monthly rotation required."
+
+        - alert: JWKSSyncFailing
+          expr: increase(jwks_sync_errors_total[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "JWKS Vault sync is failing"
+            description: "The server cannot sync keys from Vault."
+
+        - alert: JWKSKeyRotationFailing
+          expr: increase(jwks_key_rotation_errors_total[1h]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "JWKS key rotation is failing"
+            description: "The rotator has encountered errors during key rotation."

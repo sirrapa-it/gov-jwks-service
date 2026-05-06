@@ -1,0 +1,121 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jwks-rotator
+  namespace: platform
+  labels:
+    app: jwks-rotator
+    component: auth
+---
+# Bootstrap Job — run once before deploying the server for the first time.
+# After the initial key is created, use the CronJob for subsequent rotations.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jwks-bootstrap
+  namespace: platform
+  labels:
+    app: jwks-rotator
+    component: auth
+spec:
+  template:
+    spec:
+      serviceAccountName: jwks-rotator
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: jwks-rotator
+          image: registry.github.com/sirrapa/platform/jwks-rotator:latest
+          env:
+            - name: VAULT_ADDR
+              value: "https://vault.platform.internal:8200"
+            - name: VAULT_K8S_ROLE
+              value: "jwks-rotator"
+            - name: VAULT_MOUNT
+              value: "secret"
+            - name: VAULT_SECRET_PATH
+              value: "jwks-service"
+            - name: KEY_BITS
+              value: "4096"
+            - name: GRACE_PERIOD
+              value: "2h"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+---
+# CronJob — monthly rotation (BIO/NIS2 compliant for RSA 4096).
+# concurrencyPolicy: Forbid prevents concurrent rotations.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jwks-rotator
+  namespace: platform
+  labels:
+    app: jwks-rotator
+    component: auth
+spec:
+  # First day of every month at 02:00 UTC
+  schedule: "0 2 1 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: jwks-rotator
+        spec:
+          serviceAccountName: jwks-rotator
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: jwks-rotator
+              image: registry.github.com/sirrapa/platform/jwks-rotator:latest
+              env:
+                - name: VAULT_ADDR
+                  value: "https://vault.platform.internal:8200"
+                - name: VAULT_K8S_ROLE
+                  value: "jwks-rotator"
+                - name: VAULT_MOUNT
+                  value: "secret"
+                - name: VAULT_SECRET_PATH
+                  value: "jwks-service"
+                - name: KEY_BITS
+                  value: "4096"
+                - name: GRACE_PERIOD
+                  value: "2h"
+                - name: LOG_LEVEL
+                  value: "warn"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
