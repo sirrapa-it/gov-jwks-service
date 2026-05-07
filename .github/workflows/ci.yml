@@ -63,13 +63,13 @@ jobs:
       - name: Build server image
         run: |
           docker build \
-            --build-arg GO_BUILD_IMAGE=golang:1.22-alpine \
+            --build-arg GO_BUILD_IMAGE=golang:1.26-alpine \
             -f deploy/server/Dockerfile \
             -t jwks-service:${{ github.sha }} .
 
       - name: Build rotator image
         run: |
           docker build \
-            --build-arg GO_BUILD_IMAGE=golang:1.22-alpine \
+            --build-arg GO_BUILD_IMAGE=golang:1.26-alpine \
             -f deploy/rotator/Dockerfile \
             -t jwks-rotator:${{ github.sha }} .
