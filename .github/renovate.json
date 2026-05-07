@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":timezone(Europe/Amsterdam)"
+  ],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "addLabels": ["priority/high"]
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "pinDigests": true
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "go-modules-non-major"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["golang"],
+      "groupName": "golang-builder"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["gcr.io/distroless/static"],
+      "groupName": "distroless-runtime"
+    },
+    {
+      "matchDepTypes": ["indirect"],
+      "enabled": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update GO_BUILD_IMAGE build-arg default in Dockerfiles",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "ARG GO_BUILD_IMAGE=(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
