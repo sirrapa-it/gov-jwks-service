@@ -1,5 +1,5 @@
 # hadolint ignore=InvalidDefaultArgInFrom
-ARG GO_BUILD_IMAGE=golang:1.22-alpine
+ARG GO_BUILD_IMAGE=golang:1.26-alpine
 
 # ── Stage 1: dependencies ────────────────────────────────────────────────────
 FROM ${GO_BUILD_IMAGE} AS deps
