@@ -23,9 +23,13 @@ jobs:
           - name: server
             image: sirrapa/jwks-server
             dockerfile: deploy/server/Dockerfile
+            readme: deploy/server/README.md
+            short_description: "JWKS HTTP service — RSA-4096 keys from Vault, NIS2/BIO compliant"
           - name: rotator
             image: sirrapa/jwks-rotator
             dockerfile: deploy/rotator/Dockerfile
+            readme: deploy/rotator/README.md
+            short_description: "One-shot CronJob that rotates and prunes RSA-4096 keys in Vault"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -62,6 +66,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ matrix.image }}
+          readme-filepath: ${{ matrix.readme }}
+          short-description: ${{ matrix.short_description }}
 
   release:
     name: GitHub Release
