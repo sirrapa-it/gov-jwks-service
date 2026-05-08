@@ -1,0 +1,44 @@
+{{ .Chart.Name }} {{ .Chart.AppVersion }} installed in namespace {{ .Release.Namespace }}.
+
+Components installed:
+{{- if .Values.server.enabled }}
+  - Server Deployment: {{ include "jwks-service.server.fullname" . }} (replicas: {{ if .Values.server.autoscaling.enabled }}{{ .Values.server.autoscaling.minReplicas }}–{{ .Values.server.autoscaling.maxReplicas }} via HPA{{ else }}{{ .Values.server.replicaCount }}{{ end }})
+  - Service:           {{ include "jwks-service.server.fullname" . }} ({{ .Values.server.service.type }} on port {{ .Values.server.service.port }})
+{{- end }}
+{{- if .Values.rotator.cronjob.enabled }}
+  - Rotator CronJob:   {{ include "jwks-service.rotator.fullname" . }} (schedule: {{ .Values.rotator.cronjob.schedule }})
+{{- end }}
+{{- if .Values.rotator.bootstrap.enabled }}
+  - Bootstrap Job ran as a pre-install hook to seed the initial signing key.
+{{- end }}
+
+Verify the JWKS endpoint:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "jwks-service.server.fullname" . }} 8080:{{ .Values.server.service.port }}
+  curl -s http://localhost:8080/.well-known/jwks.json | jq
+
+Check the active key in Vault:
+
+  vault read {{ .Values.vault.mount }}/{{ .Values.vault.secretPath }}/active
+
+Trigger an out-of-schedule rotation (e.g. emergency response):
+
+  kubectl -n {{ .Release.Namespace }} create job \
+    --from=cronjob/{{ include "jwks-service.rotator.fullname" . }} \
+    {{ include "jwks-service.rotator.fullname" . }}-emergency-$(date +%s)
+
+Required Vault configuration (apply once, out of band):
+
+  vault write auth/{{ .Values.vault.k8sMount }}/role/{{ .Values.vault.k8sRole.server }} \
+      bound_service_account_names={{ include "jwks-service.server.serviceAccountName" . }} \
+      bound_service_account_namespaces={{ .Release.Namespace }} \
+      policies=jwks-service_ro \
+      alias_name_source=serviceaccount_name \
+      ttl=1h
+
+  vault write auth/{{ .Values.vault.k8sMount }}/role/{{ .Values.vault.k8sRole.rotator }} \
+      bound_service_account_names={{ include "jwks-service.rotator.serviceAccountName" . }} \
+      bound_service_account_namespaces={{ .Release.Namespace }} \
+      policies=jwks-service_rw \
+      alias_name_source=serviceaccount_name \
+      ttl=1h

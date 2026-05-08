@@ -1,0 +1,57 @@
+{{- if .Values.monitoring.prometheusRule.enabled -}}
+{{- $alerts := .Values.monitoring.prometheusRule.alerts -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "jwks-service.fullname" . }}-alerts
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "jwks-service.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: jwks
+      rules:
+        {{- if $alerts.noActiveKeys.enabled }}
+        - alert: JWKSNoActiveKeys
+          expr: jwks_active_keys == 0
+          for: {{ $alerts.noActiveKeys.for }}
+          labels:
+            severity: {{ $alerts.noActiveKeys.severity }}
+          annotations:
+            summary: "No active JWKS signing keys available"
+            description: "The jwks-service has no active signing keys. JWT verification will fail cluster-wide."
+        {{- end }}
+        {{- if $alerts.keyRotationOverdue.enabled }}
+        - alert: JWKSKeyRotationOverdue
+          expr: time() - jwks_last_rotation_timestamp_seconds > {{ mul $alerts.keyRotationOverdue.afterDays 86400 }}
+          for: {{ $alerts.keyRotationOverdue.for }}
+          labels:
+            severity: {{ $alerts.keyRotationOverdue.severity }}
+          annotations:
+            summary: "JWKS key rotation is overdue (NIS2/BIO)"
+            description: "Key has not been rotated in {{`{{ humanizeDuration $value }}`}}. Monthly rotation required."
+        {{- end }}
+        {{- if $alerts.syncFailing.enabled }}
+        - alert: JWKSSyncFailing
+          expr: increase(jwks_sync_errors_total[15m]) > {{ $alerts.syncFailing.threshold }}
+          for: {{ $alerts.syncFailing.for }}
+          labels:
+            severity: {{ $alerts.syncFailing.severity }}
+          annotations:
+            summary: "JWKS Vault sync is failing"
+            description: "The server cannot sync keys from Vault. Existing in-memory keys will eventually expire."
+        {{- end }}
+        {{- if $alerts.keyRotationFailing.enabled }}
+        - alert: JWKSKeyRotationFailing
+          expr: increase(jwks_key_rotation_errors_total[1h]) > 0
+          for: {{ $alerts.keyRotationFailing.for }}
+          labels:
+            severity: {{ $alerts.keyRotationFailing.severity }}
+          annotations:
+            summary: "JWKS key rotation is failing"
+            description: "The rotator has encountered errors during key rotation. Inspect rotator Job logs."
+        {{- end }}
+{{- end }}

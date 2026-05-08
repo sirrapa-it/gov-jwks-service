@@ -1,0 +1,81 @@
+{{- if .Values.rotator.cronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "jwks-service.rotator.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "jwks-service.rotator.labels" . | nindent 4 }}
+  {{- with .Values.rotator.cronjob.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.rotator.cronjob.schedule | quote }}
+  {{- with .Values.rotator.cronjob.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  concurrencyPolicy: {{ .Values.rotator.cronjob.concurrencyPolicy }}
+  startingDeadlineSeconds: {{ .Values.rotator.cronjob.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: {{ .Values.rotator.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.rotator.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.rotator.cronjob.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.rotator.cronjob.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "jwks-service.rotator.selectorLabels" . | nindent 12 }}
+            {{- with .Values.rotator.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.rotator.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ include "jwks-service.rotator.serviceAccountName" . }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.rotator.podSecurityContext | nindent 12 }}
+          containers:
+            - name: rotator
+              image: {{ include "jwks-service.rotator.image" . | quote }}
+              imagePullPolicy: {{ .Values.rotator.image.pullPolicy }}
+              env:
+                - name: KEY_BITS
+                  value: {{ .Values.rotator.config.keyBits | quote }}
+                - name: GRACE_PERIOD
+                  value: {{ .Values.rotator.config.gracePeriod | quote }}
+                - name: LOG_LEVEL
+                  value: {{ .Values.rotator.config.logLevel | quote }}
+                {{- include "jwks-service.vaultEnv" (dict "ctx" . "k8sRole" .Values.vault.k8sRole.rotator) | nindent 16 }}
+                {{- with .Values.rotator.extraEnv }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+              {{- with .Values.rotator.extraEnvFrom }}
+              envFrom:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              resources:
+                {{- toYaml .Values.rotator.resources | nindent 16 }}
+              securityContext:
+                {{- toYaml .Values.rotator.containerSecurityContext | nindent 16 }}
+          {{- with .Values.rotator.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.rotator.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.rotator.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

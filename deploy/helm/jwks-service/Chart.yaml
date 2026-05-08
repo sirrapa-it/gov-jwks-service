@@ -1,0 +1,27 @@
+apiVersion: v2
+name: jwks-service
+description: |
+  JWKS service for internal JWT issuance. Deploys the read-only server
+  (Deployment + HPA + Service) and the write-only rotator (monthly
+  CronJob with optional first-install bootstrap Job). RSA-4096 signing
+  keys are stored in HashiCorp Vault (KV v1).
+type: application
+version: 0.1.0
+appVersion: "0.0.1"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/sirrapa/jwks-service
+sources:
+  - https://github.com/sirrapa/jwks-service
+keywords:
+  - jwks
+  - jwt
+  - rsa
+  - vault
+  - oidc
+  - nis2
+  - bio
+maintainers:
+  - name: sirrapa
+    url: https://github.com/sirrapa
+annotations:
+  category: Security

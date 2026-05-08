@@ -1,0 +1,257 @@
+# Default values for jwks-service.
+#
+# This chart deploys the JWKS server (read-only Deployment) and the JWKS
+# rotator (write-only CronJob) from a single release. The two binaries
+# share a Vault backend but use separate Kubernetes ServiceAccounts and
+# Vault roles.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Labels and annotations applied to every resource produced by this chart.
+commonLabels: {}
+commonAnnotations: {}
+
+# Image pull secrets shared between server and rotator.
+imagePullSecrets: []
+# - name: regcred
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Vault — shared by server and rotator
+# ──────────────────────────────────────────────────────────────────────────────
+vault:
+  # Vault URL, e.g. https://vault.platform.svc:8200
+  addr: "https://vault.platform.svc:8200"
+
+  # Kubernetes auth backend mount path in Vault.
+  k8sMount: "kubernetes"
+
+  # Vault roles bound to the server and rotator ServiceAccounts.
+  # Configure these in Vault before deploying:
+  #   vault write auth/kubernetes/role/jwks-service ...
+  #   vault write auth/kubernetes/role/jwks-rotator ...
+  k8sRole:
+    server: "jwks-service"
+    rotator: "jwks-rotator"
+
+  # KV v1 mount and path layout under that mount.
+  mount: "secret"
+  secretPath: "jwks-service"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Server (read-only Deployment)
+# ──────────────────────────────────────────────────────────────────────────────
+server:
+  enabled: true
+
+  image:
+    repository: sirrapa/jwks-server
+    # Defaults to .Chart.AppVersion when empty.
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  config:
+    listenAddr: ":8080"
+    syncInterval: "5m"
+    shutdownTimeout: "10s"
+    logLevel: "warn"
+
+  # Extra environment variables. Use this to inject secrets via valueFrom.
+  extraEnv: []
+  # - name: SOMETHING
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: key
+
+  extraEnvFrom: []
+  # - configMapRef:
+  #     name: jwks-server-extra
+  # - secretRef:
+  #     name: jwks-server-secrets
+
+  serviceAccount:
+    create: true
+    # Defaults to the fullname-suffixed name when empty.
+    name: ""
+    annotations: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+    annotations: {}
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+  probes:
+    readiness:
+      initialDelaySeconds: 3
+      periodSeconds: 10
+      timeoutSeconds: 1
+      failureThreshold: 3
+    liveness:
+      initialDelaySeconds: 5
+      periodSeconds: 30
+      timeoutSeconds: 1
+      failureThreshold: 3
+
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: ScheduleAnyway
+  #   labelSelector:
+  #     matchLabels:
+  #       app.kubernetes.io/name: jwks-service
+  #       app.kubernetes.io/component: server
+
+  priorityClassName: ""
+  terminationGracePeriodSeconds: 30
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Rotator (write-only CronJob + optional first-install bootstrap Job)
+# ──────────────────────────────────────────────────────────────────────────────
+rotator:
+  image:
+    repository: sirrapa/jwks-rotator
+    # Defaults to .Chart.AppVersion when empty.
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  config:
+    keyBits: 4096
+    # Must exceed the JWKS Cache-Control max-age (1h by default).
+    gracePeriod: "2h"
+    logLevel: "info"
+
+  extraEnv: []
+  extraEnvFrom: []
+
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Bootstrap Job runs as a pre-install Helm hook. It creates the first
+  # signing key in Vault before the server Deployment is rolled out, so
+  # the server doesn't crash-loop while waiting for keys.
+  #
+  # Disable on second/subsequent installs to the same namespace if Vault
+  # already holds keys.
+  bootstrap:
+    enabled: true
+    backoffLimit: 1
+    activeDeadlineSeconds: 120
+    # Annotations on the Job and the bootstrap ServiceAccount.
+    annotations: {}
+
+  cronjob:
+    enabled: true
+    schedule: "0 2 1 * *"        # 02:00 UTC on the 1st of each month
+    timeZone: ""                 # e.g. "Europe/Amsterdam" — requires K8s 1.27+
+    concurrencyPolicy: Forbid
+    startingDeadlineSeconds: 300
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    backoffLimit: 0
+    activeDeadlineSeconds: 300
+    annotations: {}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Monitoring (kube-prometheus-stack CRDs)
+# ──────────────────────────────────────────────────────────────────────────────
+monitoring:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    relabelings: []
+    metricRelabelings: []
+
+  prometheusRule:
+    enabled: false
+    labels: {}
+    alerts:
+      noActiveKeys:
+        enabled: true
+        for: 1m
+        severity: critical
+      keyRotationOverdue:
+        enabled: true
+        afterDays: 35
+        for: 5m
+        severity: warning
+      syncFailing:
+        enabled: true
+        # Failures within a 15 minute window.
+        threshold: 3
+        for: 5m
+        severity: warning
+      keyRotationFailing:
+        enabled: true
+        for: 1m
+        severity: critical

@@ -1,0 +1,76 @@
+{{- if .Values.rotator.bootstrap.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "jwks-service.rotator.fullname" . }}-bootstrap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "jwks-service.rotator.labels" . | nindent 4 }}
+    app.kubernetes.io/role: bootstrap
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- with .Values.rotator.bootstrap.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  backoffLimit: {{ .Values.rotator.bootstrap.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.rotator.bootstrap.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "jwks-service.rotator.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/role: bootstrap
+        {{- with .Values.rotator.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.rotator.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "jwks-service.rotator.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.rotator.podSecurityContext | nindent 8 }}
+      containers:
+        - name: rotator
+          image: {{ include "jwks-service.rotator.image" . | quote }}
+          imagePullPolicy: {{ .Values.rotator.image.pullPolicy }}
+          env:
+            - name: KEY_BITS
+              value: {{ .Values.rotator.config.keyBits | quote }}
+            - name: GRACE_PERIOD
+              value: {{ .Values.rotator.config.gracePeriod | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.rotator.config.logLevel | quote }}
+            {{- include "jwks-service.vaultEnv" (dict "ctx" . "k8sRole" .Values.vault.k8sRole.rotator) | nindent 12 }}
+            {{- with .Values.rotator.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.rotator.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.rotator.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.rotator.containerSecurityContext | nindent 12 }}
+      {{- with .Values.rotator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.rotator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.rotator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
