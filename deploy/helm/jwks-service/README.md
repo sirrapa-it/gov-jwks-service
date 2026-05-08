@@ -8,13 +8,32 @@ Deploys the JWKS server (read-only Deployment) and rotator (write-only CronJob) 
 # 1. Bind the ServiceAccounts to Vault roles (one-time, out of band).
 #    See "Vault setup" below.
 
-# 2. Install:
-helm install jwks ./deploy/helm/jwks-service \
+# 2. Install from the public Helm repo:
+helm repo add sirrapa https://sirrapa.github.io/jwks-service
+helm repo update
+helm install jwks-service sirrapa/jwks-service \
+    -n platform --create-namespace \
+    --set vault.addr=https://vault.platform.svc:8200
+
+# Or install from a local checkout:
+helm install jwks-service ./deploy/helm/jwks-service \
     -n platform --create-namespace \
     --set vault.addr=https://vault.platform.svc:8200
 ```
 
 The pre-install bootstrap Job runs first to seed Vault with an initial signing key, then the server Deployment rolls out.
+
+## Helm repository
+
+Charts are published to GitHub Pages on every push to `main` that touches `deploy/helm/**` and increases the chart version.
+
+| Field | Value |
+|---|---|
+| Repo URL | `https://sirrapa.github.io/jwks-service` |
+| Add command | `helm repo add sirrapa https://sirrapa.github.io/jwks-service` |
+| Search | `helm search repo sirrapa/jwks-service --versions` |
+
+To publish a new version, bump `version` in [`Chart.yaml`](./Chart.yaml) (and `appVersion` if the application changed) and merge to `main`. The CI workflow `Release Helm Chart` packages the chart, creates a GitHub Release with the `.tgz` attached, and updates `index.yaml` on the `gh-pages` branch.
 
 ## Prerequisites
 
@@ -53,6 +72,42 @@ The full set of values is in [`values.yaml`](./values.yaml). Highlights:
 | `vault.k8sRole.rotator` | `jwks-rotator` | Read-write role bound to the rotator SA. |
 | `vault.mount` | `secret` | KV v1 mount. |
 | `vault.secretPath` | `jwks-service` | Key storage prefix (no `data/`, KV v1). |
+
+### Trusted CAs
+
+| Key | Default | Notes |
+|---|---|---|
+| `trustedCAs.bundles` | `{}` | Inline map of `<name>: <PEM>`. Each becomes a `<name>.crt` file in the trust directory. |
+| `trustedCAs.existingSecret` | `""` | Reference an existing Secret. Every key whose value is a PEM cert is trusted. Wins over `bundles`. |
+| `trustedCAs.mountPath` | `/etc/ssl/jwks-service-cas` | Where the certs are mounted. Set as `SSL_CERT_DIR`. |
+
+The chart adds custom root CAs to the **Go runtime trust store** via `SSL_CERT_DIR`. Because the chart leaves `SSL_CERT_FILE` unset, distroless's bundled `/etc/ssl/certs/ca-certificates.crt` keeps loading public CAs — the `SSL_CERT_DIR` certs are **additive**.
+
+No application code or env vars (`VAULT_CACERT`, etc.) are required: the runtime picks up the certificates automatically for every outbound TLS call (Vault today, any future external service tomorrow).
+
+**Inline bundles** — chart creates and mounts a Secret automatically. Use any number:
+
+```yaml
+trustedCAs:
+  bundles:
+    vault-ca: |
+      -----BEGIN CERTIFICATE-----
+      MIID...
+      -----END CERTIFICATE-----
+    sirrapa-root: |
+      -----BEGIN CERTIFICATE-----
+      MIID...
+      -----END CERTIFICATE-----
+```
+
+**Existing Secret** — useful when the CAs are managed by cert-manager / external-secrets / another release. Every key in the Secret whose value is a PEM cert becomes trusted:
+
+```yaml
+trustedCAs:
+  existingSecret: corp-trust-bundle
+```
+
+The pod template carries a `checksum/trusted-cas` annotation, so editing `bundles` and `helm upgrade` triggers a rolling restart. For `existingSecret` rotations, restart manually or use [stakater/Reloader](https://github.com/stakater/Reloader).
 
 ### Server
 

@@ -131,3 +131,69 @@ Usage: {{ include "jwks-service.vaultEnv" (dict "ctx" . "k8sRole" "jwks-service"
 - name: VAULT_SECRET_PATH
   value: {{ .ctx.Values.vault.secretPath | quote }}
 {{- end -}}
+
+{{/*
+Has the chart been configured with additional trusted CA roots?
+*/}}
+{{- define "jwks-service.trustedCAsEnabled" -}}
+{{- if or .Values.trustedCAs.bundles .Values.trustedCAs.existingSecret -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Resolve the Secret name that holds the trusted-CA bundles. Returns
+existingSecret when set, otherwise the chart-managed secret name. Empty
+when no CA roots are configured.
+*/}}
+{{- define "jwks-service.trustedCAsSecretName" -}}
+{{- if .Values.trustedCAs.existingSecret -}}
+{{- .Values.trustedCAs.existingSecret -}}
+{{- else if .Values.trustedCAs.bundles -}}
+{{- printf "%s-trusted-cas" (include "jwks-service.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Env block that points the Go runtime at the additional CA directory.
+SSL_CERT_DIR adds to the default trust store; SSL_CERT_FILE remains unset
+so distroless's bundled /etc/ssl/certs/ca-certificates.crt continues to load.
+*/}}
+{{- define "jwks-service.trustedCAsEnv" -}}
+{{- if eq (include "jwks-service.trustedCAsEnabled" .) "true" }}
+- name: SSL_CERT_DIR
+  value: {{ .Values.trustedCAs.mountPath | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Volume entry for the trusted-CA Secret. Each Secret key becomes a file in
+the mounted directory; Go reads every file in the dir as PEM.
+*/}}
+{{- define "jwks-service.trustedCAsVolume" -}}
+{{- if eq (include "jwks-service.trustedCAsEnabled" .) "true" }}
+- name: trusted-cas
+  secret:
+    secretName: {{ include "jwks-service.trustedCAsSecretName" . }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Volume mount entry for the trusted CAs. Read-only, fits
+readOnlyRootFilesystem: true.
+*/}}
+{{- define "jwks-service.trustedCAsVolumeMount" -}}
+{{- if eq (include "jwks-service.trustedCAsEnabled" .) "true" }}
+- name: trusted-cas
+  mountPath: {{ .Values.trustedCAs.mountPath | quote }}
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{/*
+Checksum of the trusted-CAs configuration. Used as a pod annotation to
+force a rolling restart when CA roots change. For existingSecret the user
+must trigger restarts themselves (e.g. via stakater/Reloader).
+*/}}
+{{- define "jwks-service.trustedCAsChecksum" -}}
+{{- $t := .Values.trustedCAs -}}
+{{- printf "bundles=%s|existing=%s|path=%s" (toJson $t.bundles) $t.existingSecret $t.mountPath | sha256sum -}}
+{{- end -}}

@@ -6,8 +6,8 @@ description: |
   CronJob with optional first-install bootstrap Job). RSA-4096 signing
   keys are stored in HashiCorp Vault (KV v1).
 type: application
-version: 0.1.0
-appVersion: "0.0.1"
+version: 0.0.2
+appVersion: "0.0.2"
 kubeVersion: ">=1.27.0-0"
 home: https://github.com/sirrapa/jwks-service
 sources:

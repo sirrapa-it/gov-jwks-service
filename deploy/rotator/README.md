@@ -81,6 +81,21 @@ All configuration is read from environment variables.
 
 If both `VAULT_K8S_ROLE` and `VAULT_TOKEN` are set, Kubernetes auth wins.
 
+### Custom / private CA
+
+To trust additional root CAs (e.g. an internal CA fronting Vault), mount the certificate(s) and set `SSL_CERT_DIR` to that directory. The Go runtime reads every PEM file there and adds it to the pool **alongside** the system bundle — no application configuration required.
+
+```bash
+docker run --rm \
+  -v $(pwd)/certs:/etc/ssl/extra-cas:ro \
+  -e SSL_CERT_DIR=/etc/ssl/extra-cas \
+  -e VAULT_ADDR=https://vault.internal:8200 \
+  -e VAULT_K8S_ROLE=jwks-rotator \
+  sirrapa/jwks-rotator:0.0.2
+```
+
+The Helm chart automates this via `trustedCAs.bundles` or `trustedCAs.existingSecret`.
+
 ## Vault setup
 
 The rotator uses **KV v1** (no `data/` prefix). Path layout:
@@ -129,7 +144,7 @@ spec:
       serviceAccountName: jwks-rotator
       containers:
         - name: rotator
-          image: sirrapa/jwks-rotator:0.0.1
+          image: sirrapa/jwks-rotator:0.0.2
           env:
             - name: VAULT_ADDR
               value: "https://vault.platform.svc:8200"
@@ -179,7 +194,7 @@ spec:
           serviceAccountName: jwks-rotator
           containers:
             - name: rotator
-              image: sirrapa/jwks-rotator:0.0.1
+              image: sirrapa/jwks-rotator:0.0.2
               env:
                 - name: VAULT_ADDR
                   value: "https://vault.platform.svc:8200"
@@ -228,7 +243,7 @@ docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  sirrapa/jwks-rotator:0.0.1
+  sirrapa/jwks-rotator:0.0.2
 
 # Inspect the result
 vault list secret/jwks-service/keys

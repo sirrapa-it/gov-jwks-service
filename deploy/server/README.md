@@ -112,6 +112,21 @@ All configuration is read from environment variables. There is no config file.
 
 If both `VAULT_K8S_ROLE` and `VAULT_TOKEN` are set, Kubernetes auth wins.
 
+### Custom / private CA
+
+The image trusts whatever is in the Go runtime trust store. To add additional root CAs (e.g. an internal CA fronting Vault), mount the certificate(s) and set `SSL_CERT_DIR` to that directory. The Go runtime reads every PEM file in the directory and adds it to the pool **in addition** to the system bundle.
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v $(pwd)/certs:/etc/ssl/extra-cas:ro \
+  -e SSL_CERT_DIR=/etc/ssl/extra-cas \
+  -e VAULT_ADDR=https://vault.internal:8200 \
+  -e VAULT_K8S_ROLE=jwks-service \
+  sirrapa/jwks-server:0.0.2
+```
+
+The Helm chart automates this via `trustedCAs.bundles` (inline) or `trustedCAs.existingSecret` (reference). No application configuration required.
+
 ## Vault setup
 
 The server uses **KV v1** (no `data/` prefix in paths). Path layout:
@@ -160,13 +175,13 @@ vault server -dev -dev-root-token-id="root"
 docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
-  sirrapa/jwks-rotator:0.0.1
+  sirrapa/jwks-rotator:0.0.2
 
 docker run --rm -p 8080:8080 \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  sirrapa/jwks-server:0.0.1
+  sirrapa/jwks-server:0.0.2
 
 curl -s http://localhost:8080/.well-known/jwks.json | jq
 ```
@@ -196,7 +211,7 @@ spec:
       serviceAccountName: jwks-service
       containers:
         - name: jwks-service
-          image: sirrapa/jwks-server:0.0.1
+          image: sirrapa/jwks-server:0.0.2
           ports:
             - containerPort: 8080
           env:

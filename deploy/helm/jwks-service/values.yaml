@@ -17,6 +17,38 @@ imagePullSecrets: []
 # - name: regcred
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Trusted CAs — additional root certificates added to the Go runtime trust
+# store. Used by every outbound TLS call (Vault, future external services).
+# Implemented via SSL_CERT_DIR; system root CAs continue to be trusted.
+# No application-side configuration is required.
+# ──────────────────────────────────────────────────────────────────────────────
+trustedCAs:
+  # Inline PEM certificates. Each map key becomes a "<key>.crt" file in the
+  # mounted directory and is added to the trust store. Keys must produce
+  # valid filenames (no slashes).
+  #
+  # bundles:
+  #   vault-ca: |
+  #     -----BEGIN CERTIFICATE-----
+  #     ...
+  #     -----END CERTIFICATE-----
+  #   sirrapa-root: |
+  #     -----BEGIN CERTIFICATE-----
+  #     ...
+  bundles: {}
+
+  # Reference an existing Secret in the release namespace. Every key whose
+  # value is a PEM cert is added to the trust store. Useful when the CA is
+  # managed by cert-manager, external-secrets, or another release.
+  # Mutually exclusive with `bundles` (existingSecret wins).
+  existingSecret: ""
+
+  # Mount path inside the container. Set as SSL_CERT_DIR.
+  # Default location is outside common system cert paths so it does not
+  # shadow distroless's bundled root file.
+  mountPath: /etc/ssl/jwks-service-cas
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Vault — shared by server and rotator
 # ──────────────────────────────────────────────────────────────────────────────
 vault:
