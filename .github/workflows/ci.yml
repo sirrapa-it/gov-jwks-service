@@ -87,7 +87,7 @@ jobs:
           version: v3.16.2
 
       - name: Install helm-unittest plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.7.0 --verify=false
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.7.0
 
       - name: helm lint
         run: helm lint deploy/helm/jwks-service --strict
