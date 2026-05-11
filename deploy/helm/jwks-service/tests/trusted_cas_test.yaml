@@ -1,0 +1,177 @@
+suite: trustedCAs helpers wired across all workloads
+# Cross-template suite that exercises the trustedCAs helpers
+# (env, volume, volumeMount, checksum, Secret) end-to-end on every
+# pod-bearing template that consumes them.
+templates:
+  - deployment.yaml
+  - cronjob.yaml
+  - job-bootstrap.yaml
+  - secret-trusted-cas.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: with no CAs, no Secret is rendered and no SSL_CERT_DIR is injected
+    asserts:
+      - hasDocuments: { count: 0 }
+        template: secret-trusted-cas.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+        template: deployment.yaml
+      - notExists:
+          path: spec.template.spec.volumes
+        template: deployment.yaml
+      - notContains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+        template: cronjob.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+        template: job-bootstrap.yaml
+
+  - it: with bundles, the chart-managed Secret is rendered and mounted on every workload
+    set:
+      trustedCAs.bundles:
+        vault-ca: |
+          -----BEGIN CERTIFICATE-----
+          AAAAAA==
+          -----END CERTIFICATE-----
+    asserts:
+      - hasDocuments: { count: 1 }
+        template: secret-trusted-cas.yaml
+      - equal:
+          path: metadata.name
+          value: jwks-jwks-service-trusted-cas
+        template: secret-trusted-cas.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: jwks-jwks-service-trusted-cas
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: trusted-cas
+            mountPath: "/etc/ssl/jwks-service-cas"
+            readOnly: true
+        template: deployment.yaml
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: jwks-jwks-service-trusted-cas
+        template: cronjob.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: jwks-jwks-service-trusted-cas
+        template: job-bootstrap.yaml
+
+  - it: with existingSecret, no chart-managed Secret is rendered but workloads point at the user Secret
+    set:
+      trustedCAs.existingSecret: platform-cas
+    asserts:
+      - hasDocuments: { count: 0 }
+        template: secret-trusted-cas.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: platform-cas
+        template: deployment.yaml
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: platform-cas
+        template: cronjob.yaml
+
+  - it: existingSecret wins over bundles (no chart-managed Secret rendered)
+    set:
+      trustedCAs.existingSecret: platform-cas
+      trustedCAs.bundles:
+        vault-ca: |
+          -----BEGIN CERTIFICATE-----
+          AAAAAA==
+          -----END CERTIFICATE-----
+    asserts:
+      - hasDocuments: { count: 0 }
+        template: secret-trusted-cas.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: platform-cas
+        template: deployment.yaml
+
+  - it: SSL_CERT_DIR follows trustedCAs.mountPath
+    set:
+      trustedCAs.mountPath: /opt/certs
+      trustedCAs.bundles:
+        ca: |
+          -----BEGIN CERTIFICATE-----
+          AAAAAA==
+          -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/opt/certs"
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: trusted-cas
+            mountPath: "/opt/certs"
+            readOnly: true
+        template: deployment.yaml
+
+  - it: checksum/trusted-cas is a 64-character lowercase hex SHA-256
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/trusted-cas"]
+          pattern: "^[0-9a-f]{64}$"
+        template: deployment.yaml
+
+  - it: checksum/trusted-cas differs from the empty-bundles checksum when bundles are set
+    # Defaults render with bundles={} → sha256 of "bundles={}|existing=|path=/etc/ssl/jwks-service-cas".
+    # The hex below is that baseline value; setting any bundle MUST produce a different annotation,
+    # otherwise pods would not roll when CAs change. The baseline itself is regex-checked above.
+    set:
+      trustedCAs.bundles:
+        ca: |
+          -----BEGIN CERTIFICATE-----
+          AAAAAA==
+          -----END CERTIFICATE-----
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/trusted-cas"]
+          pattern: "^[0-9a-f]{64}$"
+        template: deployment.yaml
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/trusted-cas"]
+          value: 166096c8fc32dcb2fbdf7da5fd5ef5358f7a5839c771f9b1fd66e3d7f5aa0c54
+        template: deployment.yaml

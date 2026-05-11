@@ -1,0 +1,136 @@
+suite: rotator CronJob
+templates:
+  - cronjob.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: renders by default
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: CronJob }
+      - equal:
+          path: metadata.name
+          value: jwks-jwks-service-rotator
+
+  - it: is suppressed when cronjob.enabled=false
+    set:
+      rotator.cronjob.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: defaults to monthly at 02:00 UTC on the 1st
+    asserts:
+      - equal:
+          path: spec.schedule
+          value: "0 2 1 * *"
+
+  - it: defaults concurrencyPolicy to Forbid (ADR-011)
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+
+  - it: omits timeZone when empty
+    asserts:
+      - notExists:
+          path: spec.timeZone
+
+  - it: emits timeZone when set
+    set:
+      rotator.cronjob.timeZone: Europe/Amsterdam
+    asserts:
+      - equal:
+          path: spec.timeZone
+          value: Europe/Amsterdam
+
+  - it: applies history limits, deadlines, and backoffLimit
+    asserts:
+      - equal:
+          path: spec.startingDeadlineSeconds
+          value: 300
+      - equal:
+          path: spec.successfulJobsHistoryLimit
+          value: 3
+      - equal:
+          path: spec.failedJobsHistoryLimit
+          value: 3
+      - equal:
+          path: spec.jobTemplate.spec.backoffLimit
+          value: 0
+      - equal:
+          path: spec.jobTemplate.spec.activeDeadlineSeconds
+          value: 300
+
+  - it: pod has restartPolicy Never
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.restartPolicy
+          value: Never
+
+  - it: uses the rotator service account
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.serviceAccountName
+          value: jwks-jwks-service-rotator
+
+  - it: builds the image from appVersion when tag is empty
+    chart:
+      appVersion: 9.9.9
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: sirrapa/jwks-rotator:9.9.9
+
+  - it: injects rotator env vars and the rotator Vault role
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: KEY_BITS
+            value: "4096"
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: GRACE_PERIOD
+            value: "2h"
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: VAULT_K8S_ROLE
+            value: "jwks-rotator"
+
+  - it: mounts trusted-cas Secret when bundles are configured
+    set:
+      trustedCAs.bundles:
+        ca: |
+          -----BEGIN CERTIFICATE-----
+          MIIBkTCB+w==
+          -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: jwks-jwks-service-trusted-cas
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: trusted-cas
+            mountPath: "/etc/ssl/jwks-service-cas"
+            readOnly: true
+
+  - it: applies hardened security contexts
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true

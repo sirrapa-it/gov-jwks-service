@@ -1,0 +1,259 @@
+suite: server Deployment
+templates:
+  - deployment.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: renders by default
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: Deployment }
+      - equal:
+          path: metadata.name
+          value: jwks-jwks-service-server
+      - equal:
+          path: metadata.namespace
+          value: platform
+
+  - it: is suppressed when server.enabled=false
+    set:
+      server.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: omits spec.replicas when autoscaling is on (HPA owns the replica count)
+    set:
+      server.autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: sets spec.replicas when autoscaling is off
+    set:
+      server.autoscaling.enabled: false
+      server.replicaCount: 4
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
+
+  - it: applies common selector labels
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: jwks-service
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/instance"]
+          value: jwks
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: server
+
+  - it: uses the server service account
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: jwks-jwks-service-server
+
+  - it: honours custom serviceAccount.name when create=false
+    set:
+      server.serviceAccount.create: false
+      server.serviceAccount.name: my-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-sa
+
+  - it: builds the image from repository:appVersion when tag is empty
+    chart:
+      appVersion: 9.9.9
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: sirrapa/jwks-server:9.9.9
+
+  - it: honours an explicit image tag
+    set:
+      server.image.tag: "1.2.3-test"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: sirrapa/jwks-server:1.2.3-test
+
+  - it: injects the canonical server env vars
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LISTEN_ADDR
+            value: ":8080"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SYNC_INTERVAL
+            value: "5m"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: VAULT_ADDR
+            value: "https://vault.platform.svc:8200"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: VAULT_K8S_ROLE
+            value: "jwks-service"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: VAULT_MOUNT
+            value: "secret"
+
+  - it: does not inject SSL_CERT_DIR when no trusted CAs are configured
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+
+  - it: appends extraEnv after the canonical env vars
+    set:
+      server.extraEnv:
+        - name: EXTRA_ONE
+          value: "x"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA_ONE
+            value: "x"
+
+  - it: wires probes to /healthz on the http port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+
+  - it: applies hardened pod and container security contexts
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 65534
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - contains:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          content: ALL
+
+  - it: always emits a checksum/trusted-cas annotation on the pod template
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/trusted-cas"]
+
+  - it: omits volumes when no trusted CAs are configured
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+
+  - it: mounts the trusted-cas Secret when bundles are configured
+    set:
+      trustedCAs.bundles:
+        vault-ca: |
+          -----BEGIN CERTIFICATE-----
+          MIIBkTCB+w==
+          -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SSL_CERT_DIR
+            value: "/etc/ssl/jwks-service-cas"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: jwks-jwks-service-trusted-cas
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: trusted-cas
+            mountPath: "/etc/ssl/jwks-service-cas"
+            readOnly: true
+
+  - it: references existingSecret over the chart-managed name
+    set:
+      trustedCAs.existingSecret: my-platform-cas
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: trusted-cas
+            secret:
+              secretName: my-platform-cas
+
+  - it: applies imagePullSecrets when set
+    set:
+      imagePullSecrets:
+        - name: regcred
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: regcred
+
+  - it: applies node selector / tolerations / affinity / topology spread
+    set:
+      server.nodeSelector:
+        disktype: ssd
+      server.tolerations:
+        - key: dedicated
+          operator: Exists
+      server.affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution: []
+      server.topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: jwks-service
+      server.priorityClassName: system-cluster-critical
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+      - exists:
+          path: spec.template.spec.tolerations
+      - exists:
+          path: spec.template.spec.affinity
+      - exists:
+          path: spec.template.spec.topologySpreadConstraints
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: system-cluster-critical
+
+  - it: honours fullnameOverride
+    set:
+      fullnameOverride: custom
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-server

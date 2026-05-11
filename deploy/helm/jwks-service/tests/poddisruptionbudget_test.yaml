@@ -1,0 +1,43 @@
+suite: server PodDisruptionBudget
+templates:
+  - poddisruptionbudget.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: renders by default
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: PodDisruptionBudget }
+      - equal:
+          path: apiVersion
+          value: policy/v1
+      - equal:
+          path: spec.minAvailable
+          value: 1
+
+  - it: is suppressed when PDB is disabled
+    set:
+      server.podDisruptionBudget.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: is suppressed when server.enabled=false
+    set:
+      server.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: honours minAvailable overrides
+    set:
+      server.podDisruptionBudget.minAvailable: 2
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+
+  - it: selects only server pods
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: server

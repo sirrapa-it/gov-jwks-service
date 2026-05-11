@@ -1,0 +1,57 @@
+suite: ServiceMonitor
+templates:
+  - servicemonitor.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: does not render by default
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: is suppressed when server.enabled=false even if monitoring is on
+    set:
+      server.enabled: false
+      monitoring.serviceMonitor.enabled: true
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: renders when monitoring.serviceMonitor.enabled=true
+    set:
+      monitoring.serviceMonitor.enabled: true
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: ServiceMonitor }
+      - equal:
+          path: apiVersion
+          value: monitoring.coreos.com/v1
+      - equal:
+          path: spec.endpoints[0].port
+          value: http
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+      - equal:
+          path: spec.endpoints[0].scrapeTimeout
+          value: 10s
+
+  - it: selects only server pods
+    set:
+      monitoring.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: server
+
+  - it: merges extra labels
+    set:
+      monitoring.serviceMonitor.enabled: true
+      monitoring.serviceMonitor.labels:
+        release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack

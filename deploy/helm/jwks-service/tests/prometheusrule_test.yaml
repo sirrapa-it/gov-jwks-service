@@ -1,0 +1,84 @@
+suite: PrometheusRule
+templates:
+  - prometheusrule.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: does not render by default
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: renders when monitoring.prometheusRule.enabled=true
+    set:
+      monitoring.prometheusRule.enabled: true
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: PrometheusRule }
+      - equal:
+          path: metadata.name
+          value: jwks-jwks-service-alerts
+      - equal:
+          path: spec.groups[0].name
+          value: jwks
+
+  - it: emits all four alerts by default when enabled
+    set:
+      monitoring.prometheusRule.enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.groups[0].rules
+          count: 4
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: JWKSNoActiveKeys
+            expr: jwks_active_keys == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "No active JWKS signing keys available"
+              description: "The jwks-service has no active signing keys. JWT verification will fail cluster-wide."
+
+  - it: drops an alert when its toggle is off
+    set:
+      monitoring.prometheusRule.enabled: true
+      monitoring.prometheusRule.alerts.noActiveKeys.enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.groups[0].rules
+          count: 3
+      - notContains:
+          path: spec.groups[0].rules
+          content:
+            alert: JWKSNoActiveKeys
+          any: true
+
+  - it: converts afterDays to seconds in the rotation-overdue expression
+    set:
+      monitoring.prometheusRule.enabled: true
+      monitoring.prometheusRule.alerts.keyRotationOverdue.afterDays: 35
+    asserts:
+      - matchRegex:
+          path: spec.groups[0].rules[1].expr
+          pattern: "> 3024000$"
+
+  - it: substitutes the syncFailing threshold into the increase() window
+    set:
+      monitoring.prometheusRule.enabled: true
+      monitoring.prometheusRule.alerts.syncFailing.threshold: 5
+    asserts:
+      - matchRegex:
+          path: spec.groups[0].rules[2].expr
+          pattern: "increase\\(jwks_sync_errors_total\\[15m\\]\\) > 5"
+
+  - it: applies custom labels onto the PrometheusRule
+    set:
+      monitoring.prometheusRule.enabled: true
+      monitoring.prometheusRule.labels:
+        release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack

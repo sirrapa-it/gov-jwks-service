@@ -1,0 +1,53 @@
+suite: NOTES.txt
+templates:
+  - NOTES.txt
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: announces the components installed
+    asserts:
+      - matchRegexRaw:
+          pattern: "Server Deployment: jwks-jwks-service-server"
+      - matchRegexRaw:
+          pattern: "Rotator CronJob:   jwks-jwks-service-rotator"
+      - matchRegexRaw:
+          pattern: "Bootstrap Job ran as a pre-install hook"
+
+  - it: shows the HPA range when autoscaling is on
+    asserts:
+      - matchRegexRaw:
+          pattern: "replicas: 2.5 via HPA"
+
+  - it: shows the static replica count when autoscaling is off
+    set:
+      server.autoscaling.enabled: false
+      server.replicaCount: 4
+    asserts:
+      - matchRegexRaw:
+          pattern: "replicas: 4\\)"
+
+  - it: hides server lines when server.enabled=false
+    set:
+      server.enabled: false
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "Server Deployment"
+
+  - it: hides bootstrap line when bootstrap is disabled
+    set:
+      rotator.bootstrap.enabled: false
+    asserts:
+      - notMatchRegexRaw:
+          pattern: "Bootstrap Job"
+
+  - it: prints the Vault role configuration commands with the resolved roles
+    asserts:
+      - matchRegexRaw:
+          pattern: "auth/kubernetes/role/jwks-service"
+      - matchRegexRaw:
+          pattern: "auth/kubernetes/role/jwks-rotator"
+      - matchRegexRaw:
+          pattern: "bound_service_account_names=jwks-jwks-service-server"
+      - matchRegexRaw:
+          pattern: "bound_service_account_names=jwks-jwks-service-rotator"

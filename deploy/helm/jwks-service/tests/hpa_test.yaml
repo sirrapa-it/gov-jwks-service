@@ -1,0 +1,51 @@
+suite: server HorizontalPodAutoscaler
+templates:
+  - hpa.yaml
+release:
+  name: jwks
+  namespace: platform
+tests:
+  - it: renders when autoscaling is enabled
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: HorizontalPodAutoscaler }
+      - equal:
+          path: apiVersion
+          value: autoscaling/v2
+
+  - it: is suppressed when autoscaling is disabled
+    set:
+      server.autoscaling.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: is suppressed when server.enabled=false
+    set:
+      server.enabled: false
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: targets the server Deployment
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: jwks-jwks-service-server
+
+  - it: applies replica bounds and CPU target
+    set:
+      server.autoscaling.minReplicas: 3
+      server.autoscaling.maxReplicas: 7
+      server.autoscaling.targetCPUUtilizationPercentage: 55
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 3
+      - equal:
+          path: spec.maxReplicas
+          value: 7
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 55
