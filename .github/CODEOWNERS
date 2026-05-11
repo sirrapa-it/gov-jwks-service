@@ -1,0 +1,19 @@
+# CODEOWNERS — automatic review assignment.
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-policies/about-code-owners
+
+# Default owner for the whole tree.
+* @sirrapa/maintainers
+
+# Helm chart: keep platform-team eyes on every chart change.
+/deploy/helm/                @sirrapa/maintainers
+
+# CI / release workflows: high blast radius, require review.
+/.github/workflows/          @sirrapa/maintainers
+
+# Security-sensitive areas.
+/internal/vault/             @sirrapa/maintainers
+/internal/keystore/          @sirrapa/maintainers
+/SECURITY.md                 @sirrapa/maintainers
+
+# Architecture decisions: maintainers must sign off.
+/docs/adr/                   @sirrapa/maintainers

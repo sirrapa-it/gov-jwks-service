@@ -25,3 +25,4 @@ maintainers:
     url: https://github.com/sirrapa
 annotations:
   category: Security
+  licenses: Apache-2.0

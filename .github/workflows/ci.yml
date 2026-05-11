@@ -73,3 +73,53 @@ jobs:
             --build-arg GO_BUILD_IMAGE=golang:1.26-alpine \
             -f deploy/rotator/Dockerfile \
             -t jwks-rotator:${{ github.sha }} .
+
+  helm:
+    name: Helm chart lint & unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Helm
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+        with:
+          version: v3.16.2
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v0.7.0 --verify=false
+
+      - name: helm lint
+        run: helm lint deploy/helm/jwks-service --strict
+
+      - name: helm template (default values)
+        run: helm template ci-default deploy/helm/jwks-service --namespace platform > /tmp/default.yaml
+
+      - name: helm template (trusted CAs + monitoring enabled)
+        run: |
+          cat > /tmp/values-full.yaml <<'YAML'
+          monitoring:
+            serviceMonitor:
+              enabled: true
+            prometheusRule:
+              enabled: true
+          trustedCAs:
+            bundles:
+              vault-ca: |
+                -----BEGIN CERTIFICATE-----
+                MIIBkTCB+w==
+                -----END CERTIFICATE-----
+          YAML
+          helm template ci-full deploy/helm/jwks-service \
+            --namespace platform \
+            --values /tmp/values-full.yaml > /tmp/full.yaml
+
+      - name: helm unittest
+        run: helm unittest deploy/helm/jwks-service --strict
+
+      - name: Upload rendered manifests
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: rendered-manifests
+          path: /tmp/*.yaml
