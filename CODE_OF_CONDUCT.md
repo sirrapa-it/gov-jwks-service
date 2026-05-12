@@ -21,7 +21,7 @@ officially representing the project in public spaces.
 
 Reports of unacceptable behavior may be filed privately by emailing the
 project maintainers at the address listed in
-[Chart.yaml](deploy/helm/jwks-service/Chart.yaml) maintainers, or by opening
+[Chart.yaml](charts/jwks-service/Chart.yaml) maintainers, or by opening
 a private GitHub Security Advisory if no other channel is available.
 
 Maintainers will review each report, respect the privacy of the reporter,

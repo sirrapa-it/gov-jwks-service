@@ -25,7 +25,7 @@ solution. The clearer the problem, the better the resulting design.
 
 - [ ] Server (`cmd/server`)
 - [ ] Rotator (`cmd/rotator`)
-- [ ] Helm chart (`deploy/helm/jwks-service`)
+- [ ] Helm chart (`charts/jwks-service`)
 - [ ] Documentation / ADR only
 
 ## Compliance / security implications

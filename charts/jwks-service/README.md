@@ -16,7 +16,7 @@ helm install jwks-service sirrapa/jwks-service \
     --set vault.addr=https://vault.platform.svc:8200
 
 # Or install from a local checkout:
-helm install jwks-service ./deploy/helm/jwks-service \
+helm install jwks-service ./charts/jwks-service \
     -n platform --create-namespace \
     --set vault.addr=https://vault.platform.svc:8200
 ```
@@ -25,7 +25,7 @@ The pre-install bootstrap Job runs first to seed Vault with an initial signing k
 
 ## Helm repository
 
-Charts are published to GitHub Pages on every push to `main` that touches `deploy/helm/**` and increases the chart version.
+Charts are published to GitHub Pages on every push to `main` that touches `charts/**` and increases the chart version.
 
 | Field | Value |
 |---|---|
@@ -47,7 +47,7 @@ To publish a new version, bump `version` in [`Chart.yaml`](./Chart.yaml) (and `a
 ## Installation
 
 ```bash
-helm install jwks ./deploy/helm/jwks-service \
+helm install jwks ./charts/jwks-service \
     -n platform --create-namespace \
     --values my-values.yaml
 ```
@@ -208,7 +208,7 @@ For environments where Vault already contains keys (e.g. installing into a names
 ## Upgrading
 
 ```bash
-helm upgrade jwks ./deploy/helm/jwks-service -n platform --reuse-values
+helm upgrade jwks ./charts/jwks-service -n platform --reuse-values
 ```
 
 The chart and image versions are released in lockstep — the chart's `appVersion` matches the image tag. Pin both:

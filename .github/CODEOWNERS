@@ -5,7 +5,7 @@
 * @sirrapa/maintainers
 
 # Helm chart: keep platform-team eyes on every chart change.
-/deploy/helm/                @sirrapa/maintainers
+/charts/                     @sirrapa/maintainers
 
 # CI / release workflows: high blast radius, require review.
 /.github/workflows/          @sirrapa/maintainers

@@ -60,11 +60,11 @@ CI fails if total coverage drops below 95%.
 ### Helm chart tests
 
 ```bash
-helm lint deploy/helm/jwks-service
-helm unittest deploy/helm/jwks-service
+helm lint charts/jwks-service
+helm unittest charts/jwks-service
 ```
 
-Test suites live under `deploy/helm/jwks-service/tests/`. Each template has
+Test suites live under `charts/jwks-service/tests/`. Each template has
 its own suite plus a cross-template suite for the trustedCAs helpers.
 
 ## Pull request process
@@ -112,7 +112,7 @@ Reference issues in the body (`Closes #42`) rather than the subject.
 
 Container images are published on tag push (`v*.*.*`) by
 `.github/workflows/release.yml`. The Helm chart is published on push to
-`main` under `deploy/helm/**` by `.github/workflows/chart-release.yml`.
+`main` under `charts/**` by `.github/workflows/chart-release.yml`.
 Bump `Chart.yaml`'s `version` and `appVersion` together when releasing.
 
 ## Licensing
