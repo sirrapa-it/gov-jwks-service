@@ -8,8 +8,7 @@ Accepted
 
 ## Context
 
-Multiple extauth services (one per domain: zaak, boete, inning, etc.) need to sign
-internal JWTs with the same keypair so backend services can verify them via a single
+Multiple extauth services need to sign internal JWTs with the same keypair so backend services can verify them via a single
 JWKS endpoint. Someone has to own the keypair — the jwks-service or one of the
 extauth services.
 
