@@ -78,6 +78,31 @@ app.kubernetes.io/component: server
 {{- end -}}
 
 {{/*
+Whether the HorizontalPodAutoscaler should be installed. Requires autoscaling
+to be enabled and both replica bounds to exceed 1 — an HPA with a 1/1 range
+cannot scale and would only pin the Deployment to a single replica.
+Returns the string "true" when enabled, empty otherwise.
+*/}}
+{{- define "jwks-service.server.hpaEnabled" -}}
+{{- if and .Values.server.autoscaling.enabled (gt (int .Values.server.autoscaling.minReplicas) 1) (gt (int .Values.server.autoscaling.maxReplicas) 1) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the PodDisruptionBudget should be installed. Only meaningful when more
+than one server pod can exist — either the HPA is installed (and can scale past
+one replica) or a static replicaCount above 1 is requested. A PDB over a single
+pod would block voluntary disruptions (node drains) indefinitely.
+Returns the string "true" when enabled, empty otherwise.
+*/}}
+{{- define "jwks-service.server.pdbEnabled" -}}
+{{- if and .Values.server.podDisruptionBudget.enabled (or (eq (include "jwks-service.server.hpaEnabled" .) "true") (gt (int .Values.server.replicaCount) 1)) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Rotator-specific names, labels, and selectors.
 */}}
 {{- define "jwks-service.rotator.fullname" -}}

@@ -1,4 +1,4 @@
-{{- if and .Values.server.enabled .Values.server.autoscaling.enabled -}}
+{{- if and .Values.server.enabled (eq (include "jwks-service.server.hpaEnabled" .) "true") -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

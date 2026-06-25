@@ -19,6 +19,27 @@ tests:
     asserts:
       - hasDocuments: { count: 0 }
 
+  - it: is suppressed when minReplicas is 1
+    set:
+      server.autoscaling.minReplicas: 1
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: is suppressed when maxReplicas is 1
+    set:
+      server.autoscaling.minReplicas: 1
+      server.autoscaling.maxReplicas: 1
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: renders when both replica bounds exceed 1
+    set:
+      server.autoscaling.minReplicas: 2
+      server.autoscaling.maxReplicas: 2
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: HorizontalPodAutoscaler }
+
   - it: is suppressed when server.enabled=false
     set:
       server.enabled: false
