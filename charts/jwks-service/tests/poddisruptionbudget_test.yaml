@@ -22,6 +22,39 @@ tests:
     asserts:
       - hasDocuments: { count: 0 }
 
+  - it: is suppressed when no HPA and replicaCount is 1
+    set:
+      server.autoscaling.enabled: false
+      server.replicaCount: 1
+    asserts:
+      - hasDocuments: { count: 0 }
+
+  - it: renders when HPA is suppressed but replicaCount exceeds 1
+    set:
+      server.autoscaling.enabled: false
+      server.replicaCount: 2
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: PodDisruptionBudget }
+
+  - it: renders when replicaCount is 1 but the HPA is installed
+    set:
+      server.replicaCount: 1
+      server.autoscaling.enabled: true
+      server.autoscaling.minReplicas: 2
+      server.autoscaling.maxReplicas: 5
+    asserts:
+      - hasDocuments: { count: 1 }
+      - isKind: { of: PodDisruptionBudget }
+
+  - it: is suppressed when the HPA is suppressed by a 1/1 replica range and replicaCount is 1
+    set:
+      server.replicaCount: 1
+      server.autoscaling.minReplicas: 1
+      server.autoscaling.maxReplicas: 1
+    asserts:
+      - hasDocuments: { count: 0 }
+
   - it: is suppressed when server.enabled=false
     set:
       server.enabled: false

@@ -116,12 +116,12 @@ The pod template carries a `checksum/trusted-cas` annotation, so editing `bundle
 | `server.image.repository` | `sirrapa/jwks-server` | |
 | `server.image.tag` | `""` | Falls back to `.Chart.AppVersion`. |
 | `server.replicaCount` | `2` | Ignored when `server.autoscaling.enabled=true`. |
-| `server.autoscaling.enabled` | `true` | HPA on CPU. |
-| `server.autoscaling.minReplicas` | `2` | |
-| `server.autoscaling.maxReplicas` | `5` | |
+| `server.autoscaling.enabled` | `true` | HPA on CPU. Only installed when both `minReplicas` and `maxReplicas` exceed 1. |
+| `server.autoscaling.minReplicas` | `2` | HPA is suppressed if this is ≤ 1. |
+| `server.autoscaling.maxReplicas` | `5` | HPA is suppressed if this is ≤ 1. |
 | `server.config.syncInterval` | `5m` | Vault refresh cadence. |
 | `server.config.logLevel` | `warn` | `debug` / `info` / `warn` / `error`. |
-| `server.podDisruptionBudget.enabled` | `true` | `minAvailable: 1` by default. |
+| `server.podDisruptionBudget.enabled` | `true` | `minAvailable: 1` by default. Only installed when the HPA is installed or `replicaCount` > 1. |
 | `server.extraEnv` / `server.extraEnvFrom` | `[]` | Inject extra env (e.g. from secrets/configmaps). |
 
 ### Rotator

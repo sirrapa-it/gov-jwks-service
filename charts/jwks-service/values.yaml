@@ -118,12 +118,17 @@ server:
 
   autoscaling:
     enabled: true
+    # The HPA is only installed when both bounds exceed 1. A 1/1 range cannot
+    # scale, so it is treated as "no autoscaling" and the HPA is suppressed.
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
 
   podDisruptionBudget:
     enabled: true
+    # The PDB is only installed when more than one server pod can exist —
+    # i.e. the HPA is installed, or replicaCount is greater than 1. A PDB over
+    # a single pod would block node drains indefinitely.
     minAvailable: 1
 
   resources:

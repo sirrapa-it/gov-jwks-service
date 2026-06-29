@@ -1,4 +1,4 @@
-{{- if and .Values.server.enabled .Values.server.podDisruptionBudget.enabled -}}
+{{- if and .Values.server.enabled (eq (include "jwks-service.server.pdbEnabled" .) "true") -}}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
