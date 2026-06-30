@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: jwks-service
-          image: registry.github.com/sirrapa/platform/jwks-service:latest
+          image: registry.github.com/sirrapa/platform/gov-jwks-service:latest
           ports:
             - containerPort: 8080
               name: http

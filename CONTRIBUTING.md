@@ -89,7 +89,7 @@ consequences. Do not modify accepted ADRs except to mark them superseded.
 
 ## Conventions
 
-- Module path: `github.com/sirrapa/jwks-service`.
+- Module path: `github.com/sirrapa-it/gov-jwks-service`.
 - All comments, commit messages, and documentation in **English**.
 - No external Go dependencies except `github.com/prometheus/client_golang`.
 - Vault KV v1 (not v2) — no `data/` prefix in paths.

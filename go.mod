@@ -1,4 +1,4 @@
-module github.com/sirrapa/jwks-service
+module github.com/sirrapa-it/gov-jwks-service
 
 go 1.26.4
 

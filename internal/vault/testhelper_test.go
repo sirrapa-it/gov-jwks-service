@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // memStore is a thread-safe in-memory SecretStore for tests.

@@ -7,7 +7,7 @@
 Report suspected vulnerabilities privately via GitHub's Security Advisory
 mechanism:
 
-> https://github.com/sirrapa/jwks-service/security/advisories/new
+> https://github.com/sirrapa-it/gov-jwks-service/security/advisories/new
 
 Provide as much detail as you can:
 

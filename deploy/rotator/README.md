@@ -4,7 +4,7 @@ One-shot binary that generates RSA-4096 signing keys, persists them to HashiCorp
 
 The rotator is the only component that **writes** to Vault. The companion service [`sirrapa/jwks-server`](https://hub.docker.com/r/sirrapa/jwks-server) reads the keys it produces (ADR-013).
 
-- Source: https://github.com/sirrapa/jwks-service
+- Source: https://github.com/sirrapa-it/gov-jwks-service
 - Companion image: [`sirrapa/jwks-server`](https://hub.docker.com/r/sirrapa/jwks-server)
 
 ## Contents
@@ -216,7 +216,7 @@ spec:
                 seccompProfile: { type: RuntimeDefault }
 ```
 
-Reference manifest: [`deploy/rotator/k8s.yaml`](https://github.com/sirrapa/jwks-service/blob/main/deploy/rotator/k8s.yaml).
+Reference manifest: [`deploy/rotator/k8s.yaml`](https://github.com/sirrapa-it/gov-jwks-service/blob/main/deploy/rotator/k8s.yaml).
 
 ### Why monthly?
 
@@ -328,7 +328,7 @@ These events are intended to be ingested into your SIEM. The CronJob keeps the l
 | Go (build) | 1.26 |
 | Server ↔ Rotator | Match major+minor; patches independent |
 
-Pre-1.0 — any release may contain breaking changes. Consult the [GitHub release notes](https://github.com/sirrapa/jwks-service/releases) before upgrading.
+Pre-1.0 — any release may contain breaking changes. Consult the [GitHub release notes](https://github.com/sirrapa-it/gov-jwks-service/releases) before upgrading.
 
 ## Troubleshooting
 

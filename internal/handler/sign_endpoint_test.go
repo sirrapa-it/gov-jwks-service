@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/handler"
-	"github.com/sirrapa/jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/handler"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
 )
 
 type signResp struct {

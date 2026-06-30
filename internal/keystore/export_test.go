@@ -9,7 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // RsaKeyGenForTest is a pointer to the rsaKeyGen hook.

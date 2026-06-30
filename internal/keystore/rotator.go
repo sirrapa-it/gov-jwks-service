@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // RotatorConfig holds the parameters for a Rotator.

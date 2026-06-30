@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
 )
 
 // newTestKey generates a small RSA key for testing.

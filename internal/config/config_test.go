@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/config"
+	"github.com/sirrapa-it/gov-jwks-service/internal/config"
 )
 
 // setEnv sets an env var for the duration of a test and restores it on cleanup.

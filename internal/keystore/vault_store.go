@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // vaultKeyRecord is the data structure stored in Vault for each signing key.

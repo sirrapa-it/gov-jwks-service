@@ -9,9 +9,9 @@ Deploys the JWKS server (read-only Deployment) and rotator (write-only CronJob) 
 #    See "Vault setup" below.
 
 # 2. Install from the public Helm repo:
-helm repo add sirrapa https://sirrapa.github.io/jwks-service
+helm repo add sirrapa https://sirrapa-it.github.io/gov-jwks-service
 helm repo update
-helm install jwks-service sirrapa/jwks-service \
+helm install jwks-service sirrapa-it/gov-jwks-service \
     -n platform --create-namespace \
     --set vault.addr=https://vault.platform.svc:8200
 
@@ -29,9 +29,9 @@ Charts are published to GitHub Pages on every push to `main` that touches `chart
 
 | Field | Value |
 |---|---|
-| Repo URL | `https://sirrapa.github.io/jwks-service` |
-| Add command | `helm repo add sirrapa https://sirrapa.github.io/jwks-service` |
-| Search | `helm search repo sirrapa/jwks-service --versions` |
+| Repo URL | `https://sirrapa-it.github.io/gov-jwks-service` |
+| Add command | `helm repo add sirrapa https://sirrapa-it.github.io/gov-jwks-service` |
+| Search | `helm search repo sirrapa-it/gov-jwks-service --versions` |
 
 To publish a new version, bump `version` in [`Chart.yaml`](./Chart.yaml) (and `appVersion` if the application changed) and merge to `main`. The CI workflow `Release Helm Chart` packages the chart, creates a GitHub Release with the `.tgz` attached, and updates `index.yaml` on the `gh-pages` branch.
 

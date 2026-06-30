@@ -4,7 +4,7 @@ HTTP service that serves a [JWKS](https://datatracker.ietf.org/doc/html/rfc7517)
 
 The server is **read-only**: it never writes to Vault. Key creation and rotation are handled by [`sirrapa/jwks-rotator`](https://hub.docker.com/r/sirrapa/jwks-rotator).
 
-- Source: https://github.com/sirrapa/jwks-service
+- Source: https://github.com/sirrapa-it/gov-jwks-service
 - Companion image: [`sirrapa/jwks-rotator`](https://hub.docker.com/r/sirrapa/jwks-rotator)
 
 ## Contents
@@ -190,7 +190,7 @@ The server **will exit** at startup if no keys are present in Vault. Always run 
 
 ## Kubernetes deployment
 
-Reference manifest: [`deploy/server/k8s.yaml`](https://github.com/sirrapa/jwks-service/blob/main/deploy/server/k8s.yaml).
+Reference manifest: [`deploy/server/k8s.yaml`](https://github.com/sirrapa-it/gov-jwks-service/blob/main/deploy/server/k8s.yaml).
 
 Minimum viable Deployment:
 
@@ -333,13 +333,13 @@ There is no shell in the image, so `kubectl exec` will fail. Use logs and `/metr
 | Go (build) | 1.26 |
 | Server ↔ Rotator | Match major+minor; patches independent |
 
-Pre-1.0 — any release may contain breaking changes. Consult the [GitHub release notes](https://github.com/sirrapa/jwks-service/releases) before upgrading.
+Pre-1.0 — any release may contain breaking changes. Consult the [GitHub release notes](https://github.com/sirrapa-it/gov-jwks-service/releases) before upgrading.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| Pod CrashLoopBackOff at startup with `no signing keys found` | Vault is empty — rotator hasn't run | Run the bootstrap Job from [`deploy/rotator/k8s.yaml`](https://github.com/sirrapa/jwks-service/blob/main/deploy/rotator/k8s.yaml). |
+| Pod CrashLoopBackOff at startup with `no signing keys found` | Vault is empty — rotator hasn't run | Run the bootstrap Job from [`deploy/rotator/k8s.yaml`](https://github.com/sirrapa-it/gov-jwks-service/blob/main/deploy/rotator/k8s.yaml). |
 | `vault: 403 permission denied` | Vault policy missing `read` on `secret/jwks-service/*` | Apply the read-only policy above. |
 | `vault: 403 invalid role or JWT` | K8s auth role does not bind the `jwks-service` ServiceAccount | Re-run the `vault write auth/kubernetes/role/jwks-service ...` command. |
 | `jwks_sync_errors_total` increasing | Network or auth failure to Vault | Check Vault audit log; check `VAULT_ADDR` resolves from the pod. |
