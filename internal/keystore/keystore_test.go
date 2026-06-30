@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"math/big"
 	"testing"
 	"time"
 
@@ -23,6 +24,52 @@ func newTestKey(t *testing.T) *keystore.ManagedKey {
 		Kid:       "test-kid",
 		Private:   priv,
 		CreatedAt: time.Now(),
+	}
+}
+
+// ---- deriveKID (RFC 7638 thumbprint) ----------------------------------------
+
+// TestDeriveKID_RFC7638Example pins deriveKID to the worked example from
+// RFC 7638 Section 3.1. Because the kid is the standard JWK thumbprint, any
+// RFC 7638-compliant signer or verifier derives the same kid for this key.
+func TestDeriveKID_RFC7638Example(t *testing.T) {
+	// RSA public key from RFC 7638 §3.1.
+	const (
+		nB64    = "0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw"
+		eB64    = "AQAB"
+		wantKID = "NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs"
+	)
+
+	nBytes, err := base64.RawURLEncoding.DecodeString(nB64)
+	if err != nil {
+		t.Fatalf("decode n: %v", err)
+	}
+	eBytes, err := base64.RawURLEncoding.DecodeString(eB64)
+	if err != nil {
+		t.Fatalf("decode e: %v", err)
+	}
+	pub := &rsa.PublicKey{
+		N: new(big.Int).SetBytes(nBytes),
+		E: int(new(big.Int).SetBytes(eBytes).Int64()),
+	}
+
+	if got := keystore.DeriveKIDForTest(pub); got != wantKID {
+		t.Errorf("deriveKID = %q, want RFC 7638 thumbprint %q", got, wantKID)
+	}
+}
+
+// TestDeriveKID_StableAndUnique verifies the kid is deterministic per key and
+// differs between keys.
+func TestDeriveKID_StableAndUnique(t *testing.T) {
+	k1 := newTestKey(t)
+	k2 := newTestKey(t)
+
+	kid1 := keystore.DeriveKIDForTest(&k1.Private.PublicKey)
+	if kid1 != keystore.DeriveKIDForTest(&k1.Private.PublicKey) {
+		t.Error("deriveKID is not stable for the same key")
+	}
+	if kid1 == keystore.DeriveKIDForTest(&k2.Private.PublicKey) {
+		t.Error("deriveKID collided for two distinct keys")
 	}
 }
 

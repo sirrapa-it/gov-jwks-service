@@ -16,6 +16,10 @@ import (
 // Tests can replace the function to inject failures.
 var RsaKeyGenForTest = &rsaKeyGen
 
+// DeriveKIDForTest exposes deriveKID so tests can assert the RFC 7638
+// thumbprint is computed correctly.
+var DeriveKIDForTest = deriveKID
+
 // PemEncodeFnForTest is a pointer to the pemEncodeFn hook.
 var PemEncodeFnForTest = &pemEncodeFn
 
