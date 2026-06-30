@@ -13,7 +13,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"math/big"
 	"time"
@@ -67,17 +66,20 @@ func SignRS256(key *ManagedKey, data []byte) ([]byte, error) {
 	return rsa.SignPKCS1v15(rand.Reader, key.Private, crypto.SHA256, h.Sum(nil))
 }
 
-// deriveKID produces a stable, URL-safe key ID from the public key material.
+// deriveKID returns the RFC 7638 JWK thumbprint of the public key, base64url
+// encoded, for use as the key ID. The thumbprint is the JOSE-standard
+// fingerprint of a key, so any RFC 7638-compliant signer or verifier derives
+// the same kid for the same key — no out-of-band agreement on the kid scheme is
+// needed for interoperability.
 func deriveKID(pub *rsa.PublicKey) string {
-	h := sha256.Sum256(marshalPublicKeyDER(pub))
-	return base64.RawURLEncoding.EncodeToString(h[:16])
-}
-
-func marshalPublicKeyDER(pub *rsa.PublicKey) []byte {
-	modBytes := pub.N.Bytes()
-	expBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(expBytes, uint32(pub.E))
-	return append(modBytes, expBytes...)
+	n := base64.RawURLEncoding.EncodeToString(pub.N.Bytes())
+	e := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pub.E)).Bytes())
+	// Canonical JWK per RFC 7638 §3.2: the required RSA members only, in
+	// lexicographic order, with no whitespace: {"e":...,"kty":"RSA","n":...}.
+	// The n and e encodings must match those used in the JWK itself (see toJWK).
+	canonical := fmt.Sprintf(`{"e":%q,"kty":"RSA","n":%q}`, e, n)
+	sum := sha256.Sum256([]byte(canonical))
+	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
 // toJWK converts a ManagedKey to its RFC 7517 representation.

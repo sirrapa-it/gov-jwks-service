@@ -123,13 +123,18 @@ Returns all currently valid public keys (RFC 7517).
       "kty": "RSA",
       "use": "sig",
       "alg": "RS256",
-      "kid": "Rp4IUbmNpISW6guVCWlSCA",
+      "kid": "NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs",
       "n": "0Z3VS5JJcds3xHn...",
       "e": "AQAB"
     }
   ]
 }
 ```
+
+The `kid` is the **RFC 7638 JWK thumbprint** of the public key. Because it is the
+standard fingerprint of a key, any RFC 7638-compliant signer derives the same
+`kid` for the same key — no out-of-band agreement on the kid scheme is required
+for a signer's tokens to match the published key.
 
 Headers: `Cache-Control: public, max-age=3600`, `X-Content-Type-Options: nosniff`
 
