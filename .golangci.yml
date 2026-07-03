@@ -1,0 +1,53 @@
+version: "2"
+
+run:
+  tests: true
+  timeout: 5m
+  # Lint the build-tagged sign endpoint (cmd/server is normally built without it).
+  build-tags:
+    - signing
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - errcheck
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    misspell:
+      locale: UK
+  exclusions:
+    generated: lax
+    rules:
+      # Tests intentionally use weak inputs (small keys, fixed nonces) to
+      # exercise error paths, and routinely ignore return values on setup and
+      # teardown calls (os.Setenv, Rotate, Close) whose effect is asserted via
+      # state rather than the returned error.
+      - path: _test\.go
+        linters:
+          - gosec
+          - unparam
+          - errcheck
+      # http.HandlerFunc / interface stubs in tests keep the full signature
+      # even when a parameter is unused.
+      - path: _test\.go
+        text: unused-parameter
+        linters:
+          - revive
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/sirrapa-it/gov-jwks-service

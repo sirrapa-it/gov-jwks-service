@@ -24,10 +24,6 @@ type signResp struct {
 	Exp   int64  `json:"exp"`
 }
 
-type errResp struct {
-	Error string `json:"error"`
-}
-
 func signRequest(t *testing.T, mux *http.ServeMux, body string) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, "/internal/sign",
@@ -177,11 +173,11 @@ func TestSign_SigningFailure_Returns500(t *testing.T) {
 }
 
 func TestSign_JSONMarshalFailure_Returns500(t *testing.T) {
-	orig := *handler.JsonMarshalFnForTest
-	*handler.JsonMarshalFnForTest = func(_ any) ([]byte, error) {
+	orig := *handler.JSONMarshalFnForTest
+	*handler.JSONMarshalFnForTest = func(_ any) ([]byte, error) {
 		return nil, errors.New("injected marshal failure")
 	}
-	t.Cleanup(func() { *handler.JsonMarshalFnForTest = orig })
+	t.Cleanup(func() { *handler.JSONMarshalFnForTest = orig })
 
 	mux := newTestMux(t, validSignStore(t))
 	rr := signRequest(t, mux, `{"sub":"u","aud":"a"}`)

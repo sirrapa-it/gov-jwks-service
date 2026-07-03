@@ -75,7 +75,7 @@ func (c *Client) Put(ctx context.Context, mount, path string, data map[string]an
 	if err != nil {
 		return fmt.Errorf("vault: PUT %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return c.apiError("PUT", path, resp)
 	}
@@ -94,7 +94,7 @@ func (c *Client) Get(ctx context.Context, mount, path string) (map[string]any, e
 	if err != nil {
 		return nil, fmt.Errorf("vault: GET %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, ErrNotFound
 	}
@@ -122,7 +122,7 @@ func (c *Client) List(ctx context.Context, mount, path string) ([]string, error)
 	if err != nil {
 		return nil, fmt.Errorf("vault: LIST %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusNotFound {
 		return []string{}, nil
 	}
@@ -152,7 +152,7 @@ func (c *Client) Delete(ctx context.Context, mount, path string) error {
 	if err != nil {
 		return fmt.Errorf("vault: DELETE %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		return c.apiError("DELETE", path, resp)
 	}

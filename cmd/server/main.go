@@ -96,7 +96,9 @@ func run(ctx context.Context, cfg *config.ServerConfig, logger *slog.Logger) int
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
+	// G118: the shutdown goroutine deliberately builds a fresh context — the
+	// server context is cancelled below, so shutdown needs its own timeout.
+	go func() { //nolint:gosec
 		select {
 		case <-quit:
 		case <-ctx.Done():

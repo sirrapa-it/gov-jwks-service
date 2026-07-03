@@ -30,6 +30,8 @@ type TokenAuth struct {
 	Token string
 }
 
+// Authenticate returns the static token and a fixed TTL. The context, base URL,
+// and HTTP client are unused; it never contacts Vault.
 func (a *TokenAuth) Authenticate(_ context.Context, _ string, _ *http.Client) (string, time.Duration, error) {
 	if a.Token == "" {
 		return "", 0, fmt.Errorf("vault: TokenAuth: token must not be empty")
@@ -54,6 +56,8 @@ type KubernetesAuth struct {
 	ServiceAccountTokenPath string
 }
 
+// Authenticate exchanges the pod service-account JWT for a short-lived Vault
+// token via the Kubernetes auth method, returning the token and its lease TTL.
 func (a *KubernetesAuth) Authenticate(ctx context.Context, baseURL string, httpClient *http.Client) (string, time.Duration, error) {
 	mountPath := a.MountPath
 	if mountPath == "" {
@@ -61,10 +65,12 @@ func (a *KubernetesAuth) Authenticate(ctx context.Context, baseURL string, httpC
 	}
 	tokenPath := a.ServiceAccountTokenPath
 	if tokenPath == "" {
-		tokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+		// G101: this is the well-known Kubernetes SA token file path, not a credential.
+		tokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token" //nolint:gosec
 	}
 
-	saJWT, err := os.ReadFile(tokenPath)
+	// G304: tokenPath is an operator-controlled mount path, not attacker input.
+	saJWT, err := os.ReadFile(tokenPath) //nolint:gosec
 	if err != nil {
 		return "", 0, fmt.Errorf("vault: KubernetesAuth: read service account token from %s: %w", tokenPath, err)
 	}
@@ -78,7 +84,7 @@ func (a *KubernetesAuth) Authenticate(ctx context.Context, baseURL string, httpC
 	if err != nil {
 		return "", 0, fmt.Errorf("vault: KubernetesAuth: login request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", 0, fmt.Errorf("vault: KubernetesAuth: login returned HTTP %d", resp.StatusCode)

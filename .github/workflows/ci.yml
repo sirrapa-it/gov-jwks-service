@@ -23,11 +23,10 @@ jobs:
       - name: Download dependencies
         run: go mod download && go mod verify
 
-#      - name: Lint
-#        uses: golangci/golangci-lint-action@v9
-#        with:
-#          version: latest
-#          args: --timeout=5m
+      - name: Lint
+        uses: golangci/golangci-lint-action@d583c34f0599d37dbac4a198b9c83201be380893 # v9.3.0
+        with:
+          version: v2.12.2
 
       - name: Test with coverage
         run: |

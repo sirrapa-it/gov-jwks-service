@@ -38,9 +38,15 @@ test:
 test-cover: test
 	go tool cover -html=coverage.out
 
-## lint: run golangci-lint
+## lint: run golangci-lint (v2, pinned to match CI)
 lint:
-	golangci-lint run ./...
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not found; install v2 with:"; \
+		echo "  go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2"; \
+		exit 1; \
+	fi
 
 ## vault-setup: configure Vault policies and roles
 vault-setup:

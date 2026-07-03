@@ -44,7 +44,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 //
 //	GET /.well-known/jwks.json
 func (h *Handler) JWKS() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		set := h.store.PublicKeySet()
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "public, max-age=3600")
@@ -57,7 +57,7 @@ func (h *Handler) JWKS() http.HandlerFunc {
 //
 //	GET /healthz
 func (h *Handler) Health() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	}
 }
