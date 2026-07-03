@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/config"
+	"github.com/sirrapa-it/gov-jwks-service/internal/config"
 )
 
 func discardLogger() *slog.Logger {

@@ -6,7 +6,7 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/sirrapa/jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
 )
 
 func TestEncodePrivateKeyPEM_ValidKey(t *testing.T) {

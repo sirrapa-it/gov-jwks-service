@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
 )
 
 type signRequest struct {

@@ -26,10 +26,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/config"
-	"github.com/sirrapa/jwks-service/internal/handler"
-	"github.com/sirrapa/jwks-service/internal/keystore"
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/config"
+	"github.com/sirrapa-it/gov-jwks-service/internal/handler"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // shutdownTimeout is the maximum time to drain in-flight requests.

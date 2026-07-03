@@ -14,7 +14,7 @@ Two binaries in one repository:
 ## Critical rules
 
 - **Never use the word "cjib" or "CJIB"** anywhere in code, comments, logs or tests
-- Module path: `github.com/sirrapa/jwks-service`
+- Module path: `github.com/sirrapa-it/gov-jwks-service`
 - All code comments and documentation in **English**
 - No external Go dependencies except `github.com/prometheus/client_golang`
 - Vault KV **v1** (not v2) — no `data/` prefix in paths

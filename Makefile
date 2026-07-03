@@ -2,7 +2,7 @@ IMAGE_REGISTRY ?= registry.github.com/sirrapa/platform
 VERSION        ?= 0.0.1
 GO_BUILD_IMAGE ?= golang:1.22-alpine
 
-SERVER_IMAGE  := $(IMAGE_REGISTRY)/jwks-service:$(VERSION)
+SERVER_IMAGE  := $(IMAGE_REGISTRY)/gov-jwks-service:$(VERSION)
 ROTATOR_IMAGE := $(IMAGE_REGISTRY)/jwks-rotator:$(VERSION)
 
 .PHONY: build test lint vault-setup bootstrap deploy help

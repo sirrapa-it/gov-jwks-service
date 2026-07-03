@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirrapa/jwks-service/internal/keystore"
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 func newPopulatedStore(t *testing.T, secretPath string) (*keystore.VaultKeyStore, *memStoreKS) {

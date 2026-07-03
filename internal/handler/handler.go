@@ -11,7 +11,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/sirrapa/jwks-service/internal/keystore"
+	"github.com/sirrapa-it/gov-jwks-service/internal/keystore"
 )
 
 // jsonMarshalFn and rsaSignFn are test hooks for the sign endpoint.

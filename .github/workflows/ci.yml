@@ -65,7 +65,7 @@ jobs:
           docker build \
             --build-arg GO_BUILD_IMAGE=golang:1.26-alpine \
             -f deploy/server/Dockerfile \
-            -t jwks-service:${{ github.sha }} .
+            -t gov-jwks-service:${{ github.sha }} .
 
       - name: Build rotator image
         run: |

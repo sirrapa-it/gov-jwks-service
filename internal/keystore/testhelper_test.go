@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/sirrapa/jwks-service/internal/vault"
+	"github.com/sirrapa-it/gov-jwks-service/internal/vault"
 )
 
 // testCtx returns a background context that is cancelled when the test ends.
