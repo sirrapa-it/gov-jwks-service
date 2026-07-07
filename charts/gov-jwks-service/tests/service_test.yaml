@@ -11,7 +11,7 @@ tests:
       - isKind: { of: Service }
       - equal:
           path: metadata.name
-          value: jwks-jwks-service-server
+          value: jwks-gov-jwks-service-server
 
   - it: is suppressed when server.enabled=false
     set:
@@ -44,7 +44,7 @@ tests:
           value: server
       - equal:
           path: spec.selector["app.kubernetes.io/name"]
-          value: jwks-service
+          value: gov-jwks-service
 
   - it: honours service.type and ports overrides
     set:

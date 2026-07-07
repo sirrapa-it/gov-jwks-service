@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a defect in jwks-service or its Helm chart
+about: Report a defect in gov-jwks-service or its Helm chart
 title: "[bug] "
 labels: bug
 assignees: ''

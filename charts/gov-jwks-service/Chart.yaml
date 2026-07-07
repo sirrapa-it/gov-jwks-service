@@ -1,5 +1,5 @@
 apiVersion: v2
-name: jwks-service
+name: gov-jwks-service
 description: |
   JWKS service for internal JWT issuance. Deploys the read-only server
   (Deployment + HPA + Service) and the write-only rotator (monthly

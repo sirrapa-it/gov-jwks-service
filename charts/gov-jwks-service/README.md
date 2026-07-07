@@ -1,4 +1,4 @@
-# jwks-service Helm chart
+# gov-jwks-service Helm chart
 
 Deploys the JWKS server (read-only Deployment) and rotator (write-only CronJob) from a single release. Both share a HashiCorp Vault backend (KV v1) but use separate ServiceAccounts and Vault roles.
 
@@ -16,7 +16,7 @@ helm install jwks-service sirrapa-it/gov-jwks-service \
     --set vault.addr=https://vault.platform.svc:8200
 
 # Or install from a local checkout:
-helm install jwks-service ./charts/jwks-service \
+helm install jwks-service ./charts/gov-jwks-service \
     -n platform --create-namespace \
     --set vault.addr=https://vault.platform.svc:8200
 ```
@@ -47,7 +47,7 @@ To publish a new version, bump `version` in [`Chart.yaml`](./Chart.yaml) (and `a
 ## Installation
 
 ```bash
-helm install jwks ./charts/jwks-service \
+helm install jwks ./charts/gov-jwks-service \
     -n platform --create-namespace \
     --values my-values.yaml
 ```
@@ -177,21 +177,21 @@ Bind both ServiceAccounts to their roles:
 
 ```bash
 vault write auth/kubernetes/role/jwks-service \
-    bound_service_account_names=<release>-jwks-service-server \
+    bound_service_account_names=<release>-gov-jwks-service-server \
     bound_service_account_namespaces=platform \
     policies=jwks-service_ro \
     alias_name_source=serviceaccount_name \
     ttl=1h
 
 vault write auth/kubernetes/role/jwks-rotator \
-    bound_service_account_names=<release>-jwks-service-rotator \
+    bound_service_account_names=<release>-gov-jwks-service-rotator \
     bound_service_account_namespaces=platform \
     policies=jwks-service_rw \
     alias_name_source=serviceaccount_name \
     ttl=1h
 ```
 
-The ServiceAccount names follow the pattern `<release-name>-jwks-service-<component>` by default. Override with `server.serviceAccount.name` and `rotator.serviceAccount.name` to use stable names.
+The ServiceAccount names follow the pattern `<release-name>-gov-jwks-service-<component>` by default. Override with `server.serviceAccount.name` and `rotator.serviceAccount.name` to use stable names.
 
 ## Bootstrap behaviour
 
@@ -208,7 +208,7 @@ For environments where Vault already contains keys (e.g. installing into a names
 ## Upgrading
 
 ```bash
-helm upgrade jwks ./charts/jwks-service -n platform --reuse-values
+helm upgrade jwks ./charts/gov-jwks-service -n platform --reuse-values
 ```
 
 The chart and image versions are released in lockstep — the chart's `appVersion` matches the image tag. Pin both:
@@ -240,7 +240,7 @@ vault list secret/jwks-service/keys/ | xargs -I {} vault delete secret/jwks-serv
 
 | Symptom | Action |
 |---|---|
-| Bootstrap Job times out | Inspect `kubectl logs job/<release>-jwks-service-rotator-bootstrap`. Most common cause: Vault role not yet bound to the rotator SA. |
-| Server pods CrashLoopBackOff with "no signing keys" | The bootstrap Job failed (or `bootstrap.enabled=false` and Vault is empty). Run the rotator manually with `kubectl create job --from=cronjob/<release>-jwks-service-rotator ...`. |
+| Bootstrap Job times out | Inspect `kubectl logs job/<release>-gov-jwks-service-rotator-bootstrap`. Most common cause: Vault role not yet bound to the rotator SA. |
+| Server pods CrashLoopBackOff with "no signing keys" | The bootstrap Job failed (or `bootstrap.enabled=false` and Vault is empty). Run the rotator manually with `kubectl create job --from=cronjob/<release>-gov-jwks-service-rotator ...`. |
 | `helm install` fails after timeout but resources exist | Re-run `helm upgrade --install` — the chart is idempotent. The bootstrap hook will be skipped on the upgrade. |
 | ServiceMonitor / PrometheusRule not picked up | Ensure the kube-prometheus-stack `Prometheus` resource selects this namespace (or set `monitoring.serviceMonitor.labels` to match the operator's selector). |

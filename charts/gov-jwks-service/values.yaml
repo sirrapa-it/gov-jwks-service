@@ -1,4 +1,4 @@
-# Default values for jwks-service.
+# Default values for gov-jwks-service.
 #
 # This chart deploys the JWKS server (read-only Deployment) and the JWKS
 # rotator (write-only CronJob) from a single release. The two binaries
@@ -175,7 +175,7 @@ server:
   #   whenUnsatisfiable: ScheduleAnyway
   #   labelSelector:
   #     matchLabels:
-  #       app.kubernetes.io/name: jwks-service
+  #       app.kubernetes.io/name: gov-jwks-service
   #       app.kubernetes.io/component: server
 
   priorityClassName: ""
