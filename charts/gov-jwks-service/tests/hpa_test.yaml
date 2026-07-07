@@ -53,7 +53,7 @@ tests:
           value: Deployment
       - equal:
           path: spec.scaleTargetRef.name
-          value: jwks-jwks-service-server
+          value: jwks-gov-jwks-service-server
 
   - it: applies replica bounds and CPU target
     set:

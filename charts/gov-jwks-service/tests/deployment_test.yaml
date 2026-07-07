@@ -11,7 +11,7 @@ tests:
       - isKind: { of: Deployment }
       - equal:
           path: metadata.name
-          value: jwks-jwks-service-server
+          value: jwks-gov-jwks-service-server
       - equal:
           path: metadata.namespace
           value: platform
@@ -42,7 +42,7 @@ tests:
     asserts:
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
-          value: jwks-service
+          value: gov-jwks-service
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/instance"]
           value: jwks
@@ -54,7 +54,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
-          value: jwks-jwks-service-server
+          value: jwks-gov-jwks-service-server
 
   - it: honours custom serviceAccount.name when create=false
     set:
@@ -189,7 +189,7 @@ tests:
           content:
             name: trusted-cas
             secret:
-              secretName: jwks-jwks-service-trusted-cas
+              secretName: jwks-gov-jwks-service-trusted-cas
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
@@ -234,7 +234,7 @@ tests:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: jwks-service
+              app.kubernetes.io/name: gov-jwks-service
       server.priorityClassName: system-cluster-critical
     asserts:
       - equal:

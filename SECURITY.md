@@ -32,7 +32,7 @@ In scope:
 
 - The `cmd/server` and `cmd/rotator` binaries.
 - The published Docker images.
-- The Helm chart under `charts/jwks-service/`.
+- The Helm chart under `charts/gov-jwks-service/`.
 - The Vault interaction code paths (`internal/vault`, `internal/keystore`).
 
 Out of scope:

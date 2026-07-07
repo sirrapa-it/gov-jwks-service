@@ -2,10 +2,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "jwks-service.rotator.fullname" . }}-bootstrap
+  name: {{ include "gov-jwks-service.rotator.fullname" . }}-bootstrap
   namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "jwks-service.rotator.labels" . | nindent 4 }}
+    {{- include "gov-jwks-service.rotator.labels" . | nindent 4 }}
     app.kubernetes.io/role: bootstrap
   annotations:
     "helm.sh/hook": pre-install
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "jwks-service.rotator.selectorLabels" . | nindent 8 }}
+        {{- include "gov-jwks-service.rotator.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/role: bootstrap
         {{- with .Values.rotator.podLabels }}
         {{- toYaml . | nindent 8 }}
@@ -31,7 +31,7 @@ spec:
       {{- end }}
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: {{ include "jwks-service.rotator.serviceAccountName" . }}
+      serviceAccountName: {{ include "gov-jwks-service.rotator.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -40,7 +40,7 @@ spec:
         {{- toYaml .Values.rotator.podSecurityContext | nindent 8 }}
       containers:
         - name: rotator
-          image: {{ include "jwks-service.rotator.image" . | quote }}
+          image: {{ include "gov-jwks-service.rotator.image" . | quote }}
           imagePullPolicy: {{ .Values.rotator.image.pullPolicy }}
           env:
             - name: KEY_BITS
@@ -49,8 +49,8 @@ spec:
               value: {{ .Values.rotator.config.gracePeriod | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.rotator.config.logLevel | quote }}
-            {{- include "jwks-service.vaultEnv" (dict "ctx" . "k8sRole" .Values.vault.k8sRole.rotator) | nindent 12 }}
-            {{- include "jwks-service.trustedCAsEnv" . | nindent 12 }}
+            {{- include "gov-jwks-service.vaultEnv" (dict "ctx" . "k8sRole" .Values.vault.k8sRole.rotator) | nindent 12 }}
+            {{- include "gov-jwks-service.trustedCAsEnv" . | nindent 12 }}
             {{- with .Values.rotator.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -62,11 +62,11 @@ spec:
             {{- toYaml .Values.rotator.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.rotator.containerSecurityContext | nindent 12 }}
-          {{- with include "jwks-service.trustedCAsVolumeMount" . }}
+          {{- with include "gov-jwks-service.trustedCAsVolumeMount" . }}
           volumeMounts:
             {{- . | nindent 12 }}
           {{- end }}
-      {{- with include "jwks-service.trustedCAsVolume" . }}
+      {{- with include "gov-jwks-service.trustedCAsVolume" . }}
       volumes:
         {{- . | nindent 8 }}
       {{- end }}

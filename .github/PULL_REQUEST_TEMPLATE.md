@@ -27,8 +27,8 @@ that don't apply.
 <!-- How did you verify this change? Include commands and expected output. -->
 
 - [ ] `make test` passes locally
-- [ ] `helm lint charts/jwks-service` passes (if chart touched)
-- [ ] `helm unittest charts/jwks-service` passes (if chart touched)
+- [ ] `helm lint charts/gov-jwks-service` passes (if chart touched)
+- [ ] `helm unittest charts/gov-jwks-service` passes (if chart touched)
 - [ ] New code paths have test coverage
 - [ ] Manual verification (describe below)
 

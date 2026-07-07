@@ -8,9 +8,9 @@ tests:
   - it: announces the components installed
     asserts:
       - matchRegexRaw:
-          pattern: "Server Deployment: jwks-jwks-service-server"
+          pattern: "Server Deployment: jwks-gov-jwks-service-server"
       - matchRegexRaw:
-          pattern: "Rotator CronJob:   jwks-jwks-service-rotator"
+          pattern: "Rotator CronJob:   jwks-gov-jwks-service-rotator"
       - matchRegexRaw:
           pattern: "Bootstrap Job ran as a pre-install hook"
 
@@ -48,6 +48,6 @@ tests:
       - matchRegexRaw:
           pattern: "auth/kubernetes/role/jwks-rotator"
       - matchRegexRaw:
-          pattern: "bound_service_account_names=jwks-jwks-service-server"
+          pattern: "bound_service_account_names=jwks-gov-jwks-service-server"
       - matchRegexRaw:
-          pattern: "bound_service_account_names=jwks-jwks-service-rotator"
+          pattern: "bound_service_account_names=jwks-gov-jwks-service-rotator"

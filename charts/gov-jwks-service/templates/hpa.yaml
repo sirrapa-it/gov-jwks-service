@@ -1,16 +1,16 @@
-{{- if and .Values.server.enabled (eq (include "jwks-service.server.hpaEnabled" .) "true") -}}
+{{- if and .Values.server.enabled (eq (include "gov-jwks-service.server.hpaEnabled" .) "true") -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "jwks-service.server.fullname" . }}
+  name: {{ include "gov-jwks-service.server.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "jwks-service.server.labels" . | nindent 4 }}
+    {{- include "gov-jwks-service.server.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "jwks-service.server.fullname" . }}
+    name: {{ include "gov-jwks-service.server.fullname" . }}
   minReplicas: {{ .Values.server.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.server.autoscaling.maxReplicas }}
   metrics:

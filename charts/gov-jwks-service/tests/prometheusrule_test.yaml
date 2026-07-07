@@ -17,7 +17,7 @@ tests:
       - isKind: { of: PrometheusRule }
       - equal:
           path: metadata.name
-          value: jwks-jwks-service-alerts
+          value: jwks-gov-jwks-service-alerts
       - equal:
           path: spec.groups[0].name
           value: jwks

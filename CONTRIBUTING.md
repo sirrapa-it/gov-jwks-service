@@ -60,11 +60,11 @@ CI fails if total coverage drops below 95%.
 ### Helm chart tests
 
 ```bash
-helm lint charts/jwks-service
-helm unittest charts/jwks-service
+helm lint charts/gov-jwks-service
+helm unittest charts/gov-jwks-service
 ```
 
-Test suites live under `charts/jwks-service/tests/`. Each template has
+Test suites live under `charts/gov-jwks-service/tests/`. Each template has
 its own suite plus a cross-template suite for the trustedCAs helpers.
 
 ## Pull request process
