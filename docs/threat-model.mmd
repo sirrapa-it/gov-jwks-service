@@ -1,0 +1,44 @@
+%% Threat model diagram for gov-jwks-service
+%% Render with any Mermaid-compatible viewer (GitHub, VS Code, mermaid.live).
+
+flowchart TB
+    subgraph consumer_zone["Consumer trust zone (internal cluster)"]
+        Verifier["Downstream JWT verifiers<br/>(resource APIs)"]
+        Cache["JWKS cache / CDN<br/>(max-age=3600)"]
+    end
+
+    subgraph service_zone["jwks-service trust zone"]
+        Server["cmd/server<br/>stateless, 2+ replicas<br/>read-only Vault"]
+        Rotator["cmd/rotator<br/>one-shot CronJob<br/>monthly, Forbid overlap"]
+    end
+
+    subgraph platform_zone["Platform trust zone"]
+        K8s["Kubernetes API<br/>ServiceAccount tokens"]
+        Vault["Vault (KV v1)<br/>secret/jwks-service/*"]
+    end
+
+    subgraph external["External / Untrusted"]
+        Attacker["Attacker"]
+    end
+
+    K8s -->|"SA token"| Server
+    K8s -->|"SA token"| Rotator
+    Server -->|"K8s auth (read-only policy)"| Vault
+    Rotator -->|"K8s auth (write policy)"| Vault
+    Rotator -->|"generate + store RSA-4096 PEM"| Vault
+    Vault -->|"key records (PEM)"| Server
+    Server -->|"GET /.well-known/jwks.json<br/>(public keys)"| Cache
+    Cache --> Verifier
+
+    Attacker -.->|"forged / injected public key"| Vault
+    Attacker -.->|"tampered JWKS in transit"| Cache
+    Attacker -.->|"steal private key from memory"| Server
+
+    classDef trust fill:#e8f5e9,stroke:#2e7d32
+    classDef untrust fill:#ffebee,stroke:#c62828
+    classDef platform fill:#e3f2fd,stroke:#1565c0
+
+    class Attacker untrust
+    class Server,Rotator trust
+    class K8s,Vault platform
+    class Verifier,Cache trust
