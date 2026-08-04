@@ -67,19 +67,19 @@ tests:
 
   - it: builds the image from repository:appVersion when tag is empty
     chart:
-      appVersion: 9.9.9
+      appVersion: v9.9.9
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: ghcr.io/sirrapa-it/gov-jwks-service:9.9.9
+          value: ghcr.io/sirrapa-it/gov-jwks-service:v9.9.9
 
   - it: honours an explicit image tag
     set:
-      server.image.tag: "1.2.3-test"
+      server.image.tag: "v1.2.3-test"
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: ghcr.io/sirrapa-it/gov-jwks-service:1.2.3-test
+          value: ghcr.io/sirrapa-it/gov-jwks-service:v1.2.3-test
 
   - it: injects the canonical server env vars
     asserts:

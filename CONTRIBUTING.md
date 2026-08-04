@@ -111,9 +111,22 @@ Reference issues in the body (`Closes #42`) rather than the subject.
 ## Release process
 
 Container images are published on tag push (`v*.*.*`) by
-`.github/workflows/release.yml`. The Helm chart is published on push to
-`main` under `charts/**` by `.github/workflows/chart-release.yml`.
-Bump `Chart.yaml`'s `version` and `appVersion` together when releasing.
+`.github/workflows/release.yml`. They carry the same `v` prefix as the git
+tag: `v1.2.3`, `v1.2`, `v1`. The Helm chart is published on push to `main`
+under `charts/**` by `.github/workflows/chart-release.yml`.
+
+The chart and the images are released in lockstep and always carry the **same
+version number**. To release `1.2.3`:
+
+1. Set `Chart.yaml` `version: 1.2.3` and `appVersion: "v1.2.3"` in one commit.
+2. Merge to `main` — `chart-release.yml` publishes chart `1.2.3`.
+3. Push git tag `v1.2.3` — `release.yml` publishes the images tagged `v1.2.3`.
+
+The two `Chart.yaml` fields hold the same number in different notation, and
+only because the tooling forces it: `appVersion` is the image tag, so it takes
+the `v` prefix, while `version` must be bare SemVer — Helm warns on `v1.2.3`
+(`not a valid SemVerV2`) and `chart-releaser` builds the package filename and
+the `index.yaml` entry from it.
 
 ## Licensing
 

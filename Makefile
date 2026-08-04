@@ -1,5 +1,5 @@
 IMAGE_REGISTRY ?= ghcr.io/sirrapa-it
-VERSION        ?= 0.0.1
+VERSION        ?= v0.0.1
 GO_BUILD_IMAGE ?= golang:1.22-alpine
 
 SERVER_IMAGE  := $(IMAGE_REGISTRY)/gov-jwks-service:$(VERSION)

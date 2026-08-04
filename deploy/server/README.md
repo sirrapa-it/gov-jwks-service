@@ -122,7 +122,7 @@ docker run --rm -p 8080:8080 \
   -e SSL_CERT_DIR=/etc/ssl/extra-cas \
   -e VAULT_ADDR=https://vault.internal:8200 \
   -e VAULT_K8S_ROLE=jwks-service \
-  ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-service:v0.0.2
 ```
 
 The Helm chart automates this via `trustedCAs.bundles` (inline) or `trustedCAs.existingSecret` (reference). No application configuration required.
@@ -175,13 +175,13 @@ vault server -dev -dev-root-token-id="root"
 docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
-  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:v0.0.2
 
 docker run --rm -p 8080:8080 \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-service:v0.0.2
 
 curl -s http://localhost:8080/.well-known/jwks.json | jq
 ```
@@ -211,7 +211,7 @@ spec:
       serviceAccountName: jwks-service
       containers:
         - name: jwks-service
-          image: ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
+          image: ghcr.io/sirrapa-it/gov-jwks-service:v0.0.2
           ports:
             - containerPort: 8080
           env:

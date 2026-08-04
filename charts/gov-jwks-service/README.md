@@ -211,15 +211,23 @@ For environments where Vault already contains keys (e.g. installing into a names
 helm upgrade jwks ./charts/gov-jwks-service -n platform --reuse-values
 ```
 
-The chart and image versions are released in lockstep — the chart's `appVersion` matches the image tag. Pin both:
+The chart and the images are released in lockstep and always carry the **same version number**. Only the notation differs, and only because the tooling forces it:
+
+| Field | Format | Example |
+|---|---|---|
+| `Chart.yaml` `version` | bare SemVer — Helm rejects a `v` prefix | `0.0.6` |
+| `Chart.yaml` `appVersion` | image tag, `v`-prefixed | `v0.0.6` |
+| Git tag / image tag | `v`-prefixed | `v0.0.6` |
+
+Pin both images explicitly when you do not want the `appVersion` default:
 
 ```yaml
 server:
   image:
-    tag: "0.1.2"
+    tag: "v0.0.6"
 rotator:
   image:
-    tag: "0.1.2"
+    tag: "v0.0.6"
 ```
 
 ## Uninstalling
