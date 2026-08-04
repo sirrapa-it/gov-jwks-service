@@ -5,6 +5,37 @@ entries:
       category: Security
       licenses: Apache-2.0
     apiVersion: v2
+    appVersion: v0.0.6
+    created: "2026-08-04T15:23:49.609454059Z"
+    description: 'JWKS service for internal JWT issuance. Deploys the read-only server
+      (Deployment + HPA + Service) and the write-only rotator (monthly CronJob with
+      optional first-install bootstrap Job). RSA-4096 signing keys are stored in HashiCorp
+      Vault (KV v1). '
+    digest: aeec512e24e3258dd233af8991fc884365bfd3a8dde791bcef4da5398975871d
+    home: https://github.com/sirrapa-it/gov-jwks-service
+    keywords:
+    - jwks
+    - jwt
+    - rsa
+    - vault
+    - oidc
+    - nis2
+    - bio
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - name: sirrapa
+      url: https://github.com/sirrapa-it
+    name: gov-jwks-service
+    sources:
+    - https://github.com/sirrapa-it/gov-jwks-service
+    type: application
+    urls:
+    - https://github.com/sirrapa-it/gov-jwks-service/releases/download/gov-jwks-service-0.0.6/gov-jwks-service-0.0.6.tgz
+    version: 0.0.6
+  - annotations:
+      category: Security
+      licenses: Apache-2.0
+    apiVersion: v2
     appVersion: 0.0.4
     created: "2026-08-04T14:13:30.539983214Z"
     description: 'JWKS service for internal JWT issuance. Deploys the read-only server
@@ -63,4 +94,4 @@ entries:
     urls:
     - https://github.com/sirrapa-it/gov-jwks-service/releases/download/gov-jwks-service-0.0.4/gov-jwks-service-0.0.4.tgz
     version: 0.0.4
-generated: "2026-08-04T14:13:30.539992812Z"
+generated: "2026-08-04T15:23:49.609468751Z"
