@@ -91,7 +91,7 @@ docker run --rm \
   -e SSL_CERT_DIR=/etc/ssl/extra-cas \
   -e VAULT_ADDR=https://vault.internal:8200 \
   -e VAULT_K8S_ROLE=jwks-rotator \
-  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:v0.0.2
 ```
 
 The Helm chart automates this via `trustedCAs.bundles` or `trustedCAs.existingSecret`.
@@ -144,7 +144,7 @@ spec:
       serviceAccountName: jwks-rotator
       containers:
         - name: rotator
-          image: ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
+          image: ghcr.io/sirrapa-it/gov-jwks-rotator:v0.0.2
           env:
             - name: VAULT_ADDR
               value: "https://vault.platform.svc:8200"
@@ -194,7 +194,7 @@ spec:
           serviceAccountName: jwks-rotator
           containers:
             - name: rotator
-              image: ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
+              image: ghcr.io/sirrapa-it/gov-jwks-rotator:v0.0.2
               env:
                 - name: VAULT_ADDR
                   value: "https://vault.platform.svc:8200"
@@ -243,7 +243,7 @@ docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:v0.0.2
 
 # Inspect the result
 vault list secret/jwks-service/keys

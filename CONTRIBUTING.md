@@ -111,9 +111,15 @@ Reference issues in the body (`Closes #42`) rather than the subject.
 ## Release process
 
 Container images are published on tag push (`v*.*.*`) by
-`.github/workflows/release.yml`. The Helm chart is published on push to
-`main` under `charts/**` by `.github/workflows/chart-release.yml`.
-Bump `Chart.yaml`'s `version` and `appVersion` together when releasing.
+`.github/workflows/release.yml`. They carry the same `v` prefix as the git
+tag: `v1.2.3`, `v1.2`, `v1`. The Helm chart is published on push to `main`
+under `charts/**` by `.github/workflows/chart-release.yml`.
+
+Bump `Chart.yaml`'s `version` and `appVersion` together when releasing. Note
+that the two use different formats: `appVersion` is the image tag and carries
+the `v` prefix (`"v1.2.3"`), while `version` is the chart's own version and
+must be bare SemVer (`1.2.3`) — Helm and `chart-releaser` build the package
+filename from it.
 
 ## Licensing
 

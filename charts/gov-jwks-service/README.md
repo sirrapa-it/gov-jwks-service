@@ -211,15 +211,15 @@ For environments where Vault already contains keys (e.g. installing into a names
 helm upgrade jwks ./charts/gov-jwks-service -n platform --reuse-values
 ```
 
-The chart and image versions are released in lockstep — the chart's `appVersion` matches the image tag. Pin both:
+The chart and image versions are released in lockstep — the chart's `appVersion` matches the image tag. Image tags carry a `v` prefix (`v0.1.2`), matching the git tag that built them; the chart's own `version` is bare SemVer (`0.1.2`) as Helm requires. Pin both:
 
 ```yaml
 server:
   image:
-    tag: "0.1.2"
+    tag: "v0.1.2"
 rotator:
   image:
-    tag: "0.1.2"
+    tag: "v0.1.2"
 ```
 
 ## Uninstalling
