@@ -2,18 +2,18 @@
 # Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-policies/about-code-owners
 
 # Default owner for the whole tree.
-* @sirrapa/maintainers
+* @sirrapa-it/maintainers
 
 # Helm chart: keep platform-team eyes on every chart change.
-/charts/                     @sirrapa/maintainers
+/charts/                     @sirrapa-it/maintainers
 
 # CI / release workflows: high blast radius, require review.
-/.github/workflows/          @sirrapa/maintainers
+/.github/workflows/          @sirrapa-it/maintainers
 
 # Security-sensitive areas.
-/internal/vault/             @sirrapa/maintainers
-/internal/keystore/          @sirrapa/maintainers
-/SECURITY.md                 @sirrapa/maintainers
+/internal/vault/             @sirrapa-it/maintainers
+/internal/keystore/          @sirrapa-it/maintainers
+/SECURITY.md                 @sirrapa-it/maintainers
 
 # Architecture decisions: maintainers must sign off.
-/docs/adr/                   @sirrapa/maintainers
+/docs/adr/                   @sirrapa-it/maintainers

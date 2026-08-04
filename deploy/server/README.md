@@ -2,10 +2,10 @@
 
 HTTP service that serves a [JWKS](https://datatracker.ietf.org/doc/html/rfc7517) endpoint backed by RSA-4096 signing keys stored in HashiCorp Vault. Used by backend services to verify the signature on internally issued JWTs.
 
-The server is **read-only**: it never writes to Vault. Key creation and rotation are handled by [`sirrapa/jwks-rotator`](https://hub.docker.com/r/sirrapa/jwks-rotator).
+The server is **read-only**: it never writes to Vault. Key creation and rotation are handled by [`ghcr.io/sirrapa-it/gov-jwks-rotator`](https://github.com/sirrapa-it/gov-jwks-service/pkgs/container/gov-jwks-rotator).
 
 - Source: https://github.com/sirrapa-it/gov-jwks-service
-- Companion image: [`sirrapa/jwks-rotator`](https://hub.docker.com/r/sirrapa/jwks-rotator)
+- Companion image: [`ghcr.io/sirrapa-it/gov-jwks-rotator`](https://github.com/sirrapa-it/gov-jwks-service/pkgs/container/gov-jwks-rotator)
 
 ## Contents
 
@@ -122,7 +122,7 @@ docker run --rm -p 8080:8080 \
   -e SSL_CERT_DIR=/etc/ssl/extra-cas \
   -e VAULT_ADDR=https://vault.internal:8200 \
   -e VAULT_K8S_ROLE=jwks-service \
-  sirrapa/jwks-server:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
 ```
 
 The Helm chart automates this via `trustedCAs.bundles` (inline) or `trustedCAs.existingSecret` (reference). No application configuration required.
@@ -175,13 +175,13 @@ vault server -dev -dev-root-token-id="root"
 docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
-  sirrapa/jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
 
 docker run --rm -p 8080:8080 \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  sirrapa/jwks-server:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
 
 curl -s http://localhost:8080/.well-known/jwks.json | jq
 ```
@@ -211,7 +211,7 @@ spec:
       serviceAccountName: jwks-service
       containers:
         - name: jwks-service
-          image: sirrapa/jwks-server:0.0.2
+          image: ghcr.io/sirrapa-it/gov-jwks-service:0.0.2
           ports:
             - containerPort: 8080
           env:

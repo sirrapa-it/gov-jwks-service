@@ -9,7 +9,7 @@ Deploys the JWKS server (read-only Deployment) and rotator (write-only CronJob) 
 #    See "Vault setup" below.
 
 # 2. Install from the public Helm repo:
-helm repo add sirrapa https://sirrapa-it.github.io/gov-jwks-service
+helm repo add sirrapa-it https://sirrapa-it.github.io/gov-jwks-service
 helm repo update
 helm install jwks-service sirrapa-it/gov-jwks-service \
     -n platform --create-namespace \
@@ -30,7 +30,7 @@ Charts are published to GitHub Pages on every push to `main` that touches `chart
 | Field | Value |
 |---|---|
 | Repo URL | `https://sirrapa-it.github.io/gov-jwks-service` |
-| Add command | `helm repo add sirrapa https://sirrapa-it.github.io/gov-jwks-service` |
+| Add command | `helm repo add sirrapa-it https://sirrapa-it.github.io/gov-jwks-service` |
 | Search | `helm search repo sirrapa-it/gov-jwks-service --versions` |
 
 To publish a new version, bump `version` in [`Chart.yaml`](./Chart.yaml) (and `appVersion` if the application changed) and merge to `main`. The CI workflow `Release Helm Chart` packages the chart, creates a GitHub Release with the `.tgz` attached, and updates `index.yaml` on the `gh-pages` branch.
@@ -113,7 +113,7 @@ The pod template carries a `checksum/trusted-cas` annotation, so editing `bundle
 
 | Key | Default | Notes |
 |---|---|---|
-| `server.image.repository` | `sirrapa/jwks-server` | |
+| `server.image.repository` | `ghcr.io/sirrapa-it/gov-jwks-service` | |
 | `server.image.tag` | `""` | Falls back to `.Chart.AppVersion`. |
 | `server.replicaCount` | `2` | Ignored when `server.autoscaling.enabled=true`. |
 | `server.autoscaling.enabled` | `true` | HPA on CPU. Only installed when both `minReplicas` and `maxReplicas` exceed 1. |
@@ -128,7 +128,7 @@ The pod template carries a `checksum/trusted-cas` annotation, so editing `bundle
 
 | Key | Default | Notes |
 |---|---|---|
-| `rotator.image.repository` | `sirrapa/jwks-rotator` | |
+| `rotator.image.repository` | `ghcr.io/sirrapa-it/gov-jwks-rotator` | |
 | `rotator.config.keyBits` | `4096` | RSA modulus size. |
 | `rotator.config.gracePeriod` | `2h` | Must exceed JWKS `Cache-Control: max-age` (1h). |
 | `rotator.cronjob.schedule` | `0 2 1 * *` | Monthly at 02:00 UTC, day 1. |

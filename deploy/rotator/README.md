@@ -2,10 +2,10 @@
 
 One-shot binary that generates RSA-4096 signing keys, persists them to HashiCorp Vault, and prunes expired keys past their grace period. Designed to run as a Kubernetes `CronJob` (and once at bootstrap as a `Job`) — **never** as a long-running process.
 
-The rotator is the only component that **writes** to Vault. The companion service [`sirrapa/jwks-server`](https://hub.docker.com/r/sirrapa/jwks-server) reads the keys it produces (ADR-013).
+The rotator is the only component that **writes** to Vault. The companion service [`ghcr.io/sirrapa-it/gov-jwks-service`](https://github.com/sirrapa-it/gov-jwks-service/pkgs/container/gov-jwks-service) reads the keys it produces (ADR-013).
 
 - Source: https://github.com/sirrapa-it/gov-jwks-service
-- Companion image: [`sirrapa/jwks-server`](https://hub.docker.com/r/sirrapa/jwks-server)
+- Companion image: [`ghcr.io/sirrapa-it/gov-jwks-service`](https://github.com/sirrapa-it/gov-jwks-service/pkgs/container/gov-jwks-service)
 
 ## Contents
 
@@ -91,7 +91,7 @@ docker run --rm \
   -e SSL_CERT_DIR=/etc/ssl/extra-cas \
   -e VAULT_ADDR=https://vault.internal:8200 \
   -e VAULT_K8S_ROLE=jwks-rotator \
-  sirrapa/jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
 ```
 
 The Helm chart automates this via `trustedCAs.bundles` or `trustedCAs.existingSecret`.
@@ -144,7 +144,7 @@ spec:
       serviceAccountName: jwks-rotator
       containers:
         - name: rotator
-          image: sirrapa/jwks-rotator:0.0.2
+          image: ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
           env:
             - name: VAULT_ADDR
               value: "https://vault.platform.svc:8200"
@@ -194,7 +194,7 @@ spec:
           serviceAccountName: jwks-rotator
           containers:
             - name: rotator
-              image: sirrapa/jwks-rotator:0.0.2
+              image: ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
               env:
                 - name: VAULT_ADDR
                   value: "https://vault.platform.svc:8200"
@@ -243,7 +243,7 @@ docker run --rm \
   -e VAULT_ADDR=http://host.docker.internal:8200 \
   -e VAULT_TOKEN=root \
   -e LOG_LEVEL=info \
-  sirrapa/jwks-rotator:0.0.2
+  ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2
 
 # Inspect the result
 vault list secret/jwks-service/keys

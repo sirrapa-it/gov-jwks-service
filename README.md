@@ -325,7 +325,7 @@ kubectl apply -f deploy/server/k8s.yaml
 
 ```bash
 make build push VERSION=1.x.x
-kubectl set image deployment/jwks-service jwks-service=registry.github.com/sirrapa/platform/gov-jwks-service:1.x.x -n platform
+kubectl set image deployment/jwks-service jwks-service=ghcr.io/sirrapa-it/gov-jwks-service:1.x.x -n platform
 ```
 
 ### Emergency rotation (NIS2 incident response)

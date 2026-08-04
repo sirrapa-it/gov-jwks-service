@@ -80,7 +80,7 @@ tests:
     asserts:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
-          value: sirrapa/jwks-rotator:9.9.9
+          value: ghcr.io/sirrapa-it/gov-jwks-rotator:9.9.9
 
   - it: injects rotator env vars and the rotator Vault role
     asserts:

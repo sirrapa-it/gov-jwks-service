@@ -56,7 +56,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].image
-          pattern: "sirrapa/jwks-rotator:.+"
+          pattern: "ghcr.io/sirrapa-it/gov-jwks-rotator:.+"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
