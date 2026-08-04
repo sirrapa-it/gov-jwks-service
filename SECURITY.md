@@ -23,7 +23,7 @@ coordinate a disclosure timeline with you.
 ## Supported Versions
 
 Security fixes are issued for the latest `MAJOR.MINOR` release line of both
-the container images (`sirrapa/jwks-server`, `sirrapa/jwks-rotator`) and the
+the container images (`ghcr.io/sirrapa-it/gov-jwks-service`, `ghcr.io/sirrapa-it/gov-jwks-rotator`) and the
 Helm chart. Older minor versions are best-effort.
 
 ## Scope

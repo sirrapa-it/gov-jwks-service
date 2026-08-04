@@ -9,38 +9,40 @@ permissions:
   contents: write
 
 env:
-  REGISTRY: docker.io
+  REGISTRY: ghcr.io
   GO_BUILD_IMAGE: golang:1.26-alpine
 
 jobs:
   images:
     name: Build & push ${{ matrix.name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: server
-            image: sirrapa/jwks-server
+            image: sirrapa-it/gov-jwks-service
             dockerfile: deploy/server/Dockerfile
-            readme: deploy/server/README.md
-            short_description: "JWKS HTTP service — RSA-4096 keys from Vault, NIS2/BIO compliant"
+            description: "JWKS HTTP service — RSA-4096 keys from Vault, NIS2/BIO compliant"
           - name: rotator
-            image: sirrapa/jwks-rotator
+            image: sirrapa-it/gov-jwks-rotator
             dockerfile: deploy/rotator/Dockerfile
-            readme: deploy/rotator/README.md
-            short_description: "One-shot CronJob that rotates and prunes RSA-4096 keys in Vault"
+            description: "One-shot CronJob that rotates and prunes RSA-4096 keys in Vault"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
@@ -52,6 +54,11 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha,prefix=sha-,format=short
+          # Links the package to this repository in the GitHub UI and drives
+          # the package description. GHCR has no separate description API.
+          labels: |
+            org.opencontainers.image.description=${{ matrix.description }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Build & push
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
@@ -66,15 +73,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
-
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ matrix.image }}
-          readme-filepath: ${{ matrix.readme }}
-          short-description: ${{ matrix.short_description }}
 
   release:
     name: GitHub Release

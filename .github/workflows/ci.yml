@@ -71,7 +71,7 @@ jobs:
           docker build \
             --build-arg GO_BUILD_IMAGE=golang:1.26-alpine \
             -f deploy/rotator/Dockerfile \
-            -t jwks-rotator:${{ github.sha }} .
+            -t gov-jwks-rotator:${{ github.sha }} .
 
   helm:
     name: Helm chart lint & unit tests

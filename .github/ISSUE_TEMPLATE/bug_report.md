@@ -16,8 +16,8 @@ For security vulnerabilities do NOT use this template. Follow SECURITY.md.
 
 ## Environment
 
-- jwks-server image tag:        <!-- e.g. sirrapa/jwks-server:0.0.2 -->
-- jwks-rotator image tag:       <!-- e.g. sirrapa/jwks-rotator:0.0.2 -->
+- jwks-server image tag:        <!-- e.g. ghcr.io/sirrapa-it/gov-jwks-service:0.0.2 -->
+- jwks-rotator image tag:       <!-- e.g. ghcr.io/sirrapa-it/gov-jwks-rotator:0.0.2 -->
 - Helm chart version:           <!-- e.g. 0.0.2 -->
 - Kubernetes version:           <!-- `kubectl version --short` -->
 - Vault version + KV backend:   <!-- e.g. 1.16.0, KV v1 -->

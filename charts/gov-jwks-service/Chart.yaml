@@ -6,7 +6,7 @@ description: |
   CronJob with optional first-install bootstrap Job). RSA-4096 signing
   keys are stored in HashiCorp Vault (KV v1).
 type: application
-version: 0.0.4
+version: 0.0.5
 appVersion: "0.0.4"
 kubeVersion: ">=1.27.0-0"
 home: https://github.com/sirrapa-it/gov-jwks-service
@@ -22,7 +22,7 @@ keywords:
   - bio
 maintainers:
   - name: sirrapa
-    url: https://github.com/sirrapa
+    url: https://github.com/sirrapa-it
 annotations:
   category: Security
   licenses: Apache-2.0
