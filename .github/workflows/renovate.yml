@@ -1,0 +1,77 @@
+name: Renovate
+
+# Self-hosted Renovate. Replaces the Mend-hosted Renovate App, which silently
+# stopped scheduling this repository after it was renamed to gov-jwks-service.
+# The dependency rules themselves still live in .github/renovate.json — this
+# workflow only decides when Renovate runs and as whom.
+
+on:
+  schedule:
+    # 04:00 and 16:00 UTC — 06:00 and 18:00 in Europe/Amsterdam during summer
+    # time, 05:00 and 17:00 in winter. GitHub cron has no timezone support.
+    - cron: '0 4,16 * * *'
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: Log level
+        type: choice
+        default: info
+        options:
+          - info
+          - debug
+      dryRun:
+        description: Dry run — resolve updates but create no branches or PRs
+        type: boolean
+        default: false
+
+# Every API call uses the App token minted below, never GITHUB_TOKEN.
+permissions: {}
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    name: Renovate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.RENOVATE_APP_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+
+      - name: Resolve bot identity
+        id: bot
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          # Commits must be authored by the App's own bot user; GitHub rejects
+          # a push whose author does not match the token's identity. The numeric
+          # user id is resolved at run time so renaming the App cannot break it.
+          user_id=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          echo "author=${APP_SLUG}[bot] <${user_id}+${APP_SLUG}[bot]@users.noreply.github.com>" >> "$GITHUB_OUTPUT"
+
+      - name: Enable dry run
+        if: inputs.dryRun
+        run: echo "RENOVATE_DRY_RUN=full" >> "$GITHUB_ENV"
+
+      - name: Run Renovate
+        uses: renovatebot/github-action@316d7cd859606d6039a2182b7d69199e9b036835 # v46.2.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
+          RENOVATE_PLATFORM: github
+          # Explicit repository list: this workflow manages its own repository
+          # only, so a wider App installation cannot silently widen its scope.
+          RENOVATE_AUTODISCOVER: 'false'
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_GIT_AUTHOR: ${{ steps.bot.outputs.author }}
+          # Fail loudly if .github/renovate.json ever goes missing, and never
+          # raise an onboarding PR — the config is committed, not negotiated.
+          RENOVATE_REQUIRE_CONFIG: required
+          RENOVATE_ONBOARDING: 'false'
