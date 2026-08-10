@@ -11,15 +11,24 @@
   "prHourlyLimit": 2,
   "rangeStrategy": "bump",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "minimumReleaseAge": "3 days",
+  "platformAutomerge": true,
   "vulnerabilityAlerts": {
     "labels": ["security"],
-    "addLabels": ["priority/high"]
+    "addLabels": ["priority/high"],
+    "minimumReleaseAge": null
   },
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",
       "pinDigests": true
+    },
+    {
+      "description": "Action updates are the highest-volume, lowest-risk stream here, and digests are already pinned. Let CI be the gate.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "pin", "patch", "minor"],
+      "automerge": true
     },
     {
       "matchManagers": ["gomod"],
@@ -37,15 +46,38 @@
       "groupName": "distroless-runtime"
     },
     {
+      "description": "Transitive dependencies, covered by the 95% coverage gate. Safe to automerge on patch and minor.",
+      "matchManagers": ["gomod"],
       "matchDepTypes": ["indirect"],
-      "enabled": true
+      "matchUpdateTypes": ["minor", "patch"],
+      "enabled": true,
+      "automerge": true
+    },
+    {
+      "description": "Direct dependencies stay under human review. There is only one, so this costs a minute every few months.",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["require"],
+      "groupName": "go-modules-direct",
+      "automerge": false
+    },
+    {
+      "description": "The go directive is a toolchain change and must not ride along with library updates.",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "groupName": "go-toolchain",
+      "automerge": false
+    },
+    {
+      "description": "Major updates are always read by a person.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
       "description": "Update GO_BUILD_IMAGE build-arg default in Dockerfiles",
-      "fileMatch": ["(^|/)Dockerfile$"],
+      "managerFilePatterns": ["/(^|/)Dockerfile$/"],
       "matchStrings": [
         "ARG GO_BUILD_IMAGE=(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
       ],
