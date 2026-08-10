@@ -21,7 +21,12 @@
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
-      "groupName": "github-actions",
+      "groupName": "github-actions"
+    },
+    {
+      "description": "Only a real `uses:` reference can carry a digest. The github-actions manager also reports `uses-with` deps — the helm and golangci-lint version inputs in ci.yml — where a pinDigest update collides with the version update for the same dep and fails the whole branch.",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action"],
       "pinDigests": true
     },
     {
