@@ -1,5 +1,5 @@
 # hadolint ignore=InvalidDefaultArgInFrom
-ARG GO_BUILD_IMAGE=golang:1.26-alpine
+ARG GO_BUILD_IMAGE=golang:1.27-alpine
 
 FROM ${GO_BUILD_IMAGE} AS deps
 WORKDIR /app
